@@ -1,0 +1,224 @@
+Folder PATH listing
+Volume serial number is 0000023E D80A:B98B
+C:\USERS\RAVABET_OMOOMI\DOCUMENTS\CONTRACT
+|   ARCHITECTURE.md
+|   CHANGELOG.md
+|   CODE_OF_CONDUCT.md
+|   CONTRIBUTING.md
+|   Documents.lnk
+|   LICENSE
+|   PROJECT_LIFECYCLE.md
+|   PROJECT_STATE.md
+|   README.md
+|   SESSION_LOG.md
+|   tree_of_project.txt
+|   
++---agents
+|       Architect.md
+|       Backend.md
+|       Business_Analyst.md
+|       Database.md
+|       Frontend.md
+|       QA.md
+|       Reviewer.md
+|       Security.md
+|       
++---architecture
+|   |   README.md
+|   |   
+|   +---ADR
+|   |       ADR-001 - Why PostgreSQL.md
+|   |       ADR-002 - Why RBAC + ABAC.md
+|   |       ADR-003 - Why API First.md
+|   |       ADR-004 - Why Modular Monolith First.md
+|   |       
+|   +---C4
+|   +---deployment
+|   |       Deployment_Architecture.md
+|   |       
+|   +---diagrams
+|   \---sequence
++---assets
+|   +---diagrams
+|   +---icons
+|   +---logo
+|   +---screenshots
+|   \---wireframes
++---checklists
+|       Architecture.md
+|       Module.md
+|       Release.md
+|       Requirements.md
+|       Security.md
+|       
++---docs
+|       00_Project_Constitution.md
+|       01_Vision.md
+|       02_Product_Charter.md
+|       03_Product_Principles.md
+|       04_Engineering_Philosophy.md
+|       05_Project_Scope.md
+|       06_Stakeholders.md
+|       07_Actors.md
+|       08_Roles.md
+|       09_Permission_Model.md
+|       10_User_Stories.md
+|       11_Functional_Requirements.md
+|       12_Non_Functional_Requirements.md
+|       13_Business_Rules.md
+|       14_Business_Workflows.md
+|       15_Modules.md
+|       16_System_Architecture.md
+|       17_Domain_Model.md
+|       18_Data_Model_Design.md
+|       19_API_Design.md
+|       20_User_Interface_Guidelines.md
+|       21_Reporting_Analytics.md
+|       22_Security_Architecture.md
+|       23_Audit_Trail.md
+|       24_Test_Strategy.md
+|       25_Roadmap.md
+|       26_Traceability.md
+|       README.md
+|       
++---examples
+|   +---Sample Import Files
+|   +---Sample PDFs
+|   +---Sample Reports
+|   +---Sample Workflows
+|   \---Sample_Contracts
++---glossary
+|       Business.md
+|       Legal.md
+|       Technical.md
+|       
++---governance
+|   |   Branching_Strategy.md
+|   |   Contribution_Process.md
+|   |   Decision_Process.md
+|   |   Deprecation_Policy.md
+|   |   Release_Process.md
+|   |   Versioning.md
+|   |   
+|   \---RFC
+|           RFC-001.md
+|           RFC-002.md
+|           
++---knowledge
+|   |   CLM_Concepts.md
+|   |   Industry_Knowledge.md
+|   |   
+|   +---Competitor_Analysis
+|   \---Research
++---meetings
+|       2026-07-02.md
+|       2026-07-05.md
+|       Architecture Review.md
+|       
++---meta
+|       Documentation_Map.md
+|       Project_Timeline.md
+|       Repository_Map.md
+|       Traceability_Map.md
+|       
++---metrics
+|       Architecture.md
+|       Coverage.md
+|       Performance.md
+|       Quality.md
+|       
++---playbooks
+|       How to Add a Module.md
+|       How to Add a Report.md
+|       How to Design a Permission.md
+|       How to Design a Workflow.md
+|       How to Write an ADR.md
+|       README.md
+|       
++---product
+|       Feature Backlog.md
+|       Future Vision.md
+|       Ideas.md
+|       Parking Lot.md
+|       Release Backlog.md
+|       
++---prompts
+|       Backend.md
+|       Database.md
+|       Documentation.md
+|       Frontend.md
+|       Master.md
+|       Refactoring.md
+|       Review.md
+|       Security.md
+|       Testing.md
+|       
++---prototypes
+|   +---Dashboard
+|   +---Desktop
+|   +---Mobile
+|   \---PDF
++---quality
+|       Architecture_Checklist.md
+|       Definition_of_Done.md
+|       Release_Checklist.md
+|       Review_Checklist.md
+|       Security_Checklist.md
+|       
++---research
+|   |   README.md
+|   |   
+|   +---AI
+|   +---Digital Signature
+|   +---ElasticSearch
+|   +---OCR
+|   \---RBAC
++---scripts
+|   +---backup
+|   +---database
+|   +---deployment
+|   \---migration
++---specifications
+|       Approval_Workflow_Spec.md
+|       Authentication_Spec.md
+|       Contract_Management_Specification.md
+|       Notification_Spec.md
+|       README.md
+|       Search_Spec.md
+|       
++---standards
+|       Accessibility_Standards.md
+|       API_Standards.md
+|       Coding_Standards.md
+|       Database_Standards.md
+|       Documentation_Standards.md
+|       Error_Handling_Standards.md
+|       Git_Workflow.md
+|       Localization_Standards.md
+|       Logging_Standards.md
+|       Naming_Convention.md
+|       Performance_Standards.md
+|       README.md
+|       Security_Standards.md
+|       Testing_Standards.md
+|       UI_Standards.md
+|       
++---templates
+|       ADR_Template.md
+|       Decision_Template.md
+|       Module_Template.md
+|       Requirement_Template.md
+|       RFC_Template.md
+|       Workflow_Template.md
+|       
++---test-data
+|   +---contracts
+|   +---documents
+|   +---permissions
+|   +---users
+|   \---vendors
+\---tools
+        ERD Generator.md
+        Permission Matrix Generator.md
+        Schema Validator.md
+        
