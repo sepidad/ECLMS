@@ -1,11 +1,11 @@
-Folder PATH listing
-Volume serial number is 0000023E D80A:B98B
-C:\USERS\RAVABET_OMOOMI\DOCUMENTS\CONTRACT
+Folder PATH listing for volume Programming Learning
+Volume serial number is 000002D9 F825:C53E
+F:\PROJECTS\ECLMS
+|   .gitignore
 |   ARCHITECTURE.md
 |   CHANGELOG.md
 |   CODE_OF_CONDUCT.md
 |   CONTRIBUTING.md
-|   Documents.lnk
 |   LICENSE
 |   PROJECT_LIFECYCLE.md
 |   PROJECT_STATE.md
@@ -58,10 +58,10 @@ C:\USERS\RAVABET_OMOOMI\DOCUMENTS\CONTRACT
 |       03_Product_Principles.md
 |       04_Engineering_Philosophy.md
 |       05_Project_Scope.md
-|       06_Stakeholders.md
-|       07_Actors.md
-|       08_Roles.md
-|       09_Permission_Model.md
+|       06_Actors.md
+|       07_Roles.md
+|       08_Permission_Model.md
+|       09_Organizational_Structure.md
 |       10_User_Stories.md
 |       11_Functional_Requirements.md
 |       12_Non_Functional_Requirements.md
@@ -69,16 +69,17 @@ C:\USERS\RAVABET_OMOOMI\DOCUMENTS\CONTRACT
 |       14_Business_Workflows.md
 |       15_Modules.md
 |       16_System_Architecture.md
-|       17_Domain_Model.md
-|       18_Data_Model_Design.md
-|       19_API_Design.md
-|       20_User_Interface_Guidelines.md
-|       21_Reporting_Analytics.md
-|       22_Security_Architecture.md
-|       23_Audit_Trail.md
-|       24_Test_Strategy.md
-|       25_Roadmap.md
-|       26_Traceability.md
+|       17_Core_Concepts.md
+|       18_Domain_Model.md
+|       19_Data_Model_Design.md
+|       20_API_Design.md
+|       21_User_Interface_Guidelines.md
+|       22_Reporting_Analytics.md
+|       23_Security_Architecture.md
+|       24_Audit_Trail.md
+|       25_Test_Strategy.md
+|       26_Roadmap.md
+|       27_Traceability.md
 |       README.md
 |       
 +---examples
@@ -117,9 +118,11 @@ C:\USERS\RAVABET_OMOOMI\DOCUMENTS\CONTRACT
 |       
 +---meta
 |       Documentation_Map.md
+|       Identification_Standard.md
 |       Project_Timeline.md
 |       Repository_Map.md
 |       Traceability_Map.md
+|       Traceability_Standard.md
 |       
 +---metrics
 |       Architecture.md
