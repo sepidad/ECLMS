@@ -110,6 +110,7 @@ ________________________________________
 10. Long-Term Vision
 The platform should evolve into a comprehensive enterprise business platform capable of integrating with ERP systems, accounting software, identity providers, digital signature services, document management systems, procurement systems, email servers, SMS gateways, and artificial intelligence services.
 Future releases should introduce intelligent document analysis, semantic search, automated clause extraction, contract risk assessment, predictive deadline management, multilingual support, and advanced business intelligence dashboards.
+The initial release shall support both English and Persian. The architecture shall allow additional languages to be introduced through localization without changes to business logic.
 ________________________________________
 11. Success Criteria
 The project will be considered successful when organizations can:
