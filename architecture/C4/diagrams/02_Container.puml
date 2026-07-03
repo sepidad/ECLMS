@@ -1,0 +1,25 @@
+@startuml
+
+!include styles.puml
+
+actor "User" as USER
+
+rectangle "ECLMS System" {
+
+  rectangle "Web Application" as WEB
+  rectangle "Backend API (Modular Monolith)" as API
+  database "PostgreSQL Database" as DB
+  rectangle "File Storage" as STORAGE
+  rectangle "Notification Service" as NOTIF
+  rectangle "Identity Provider (External)" as IDP
+}
+
+USER --> WEB
+WEB --> API
+
+API --> DB
+API --> STORAGE
+API --> NOTIF
+API --> IDP
+
+@enduml

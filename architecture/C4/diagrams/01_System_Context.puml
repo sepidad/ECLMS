@@ -1,0 +1,36 @@
+@startuml
+
+!include styles.puml
+
+actor "Contract Manager" as CM
+actor "Legal Reviewer" as LR
+actor "Financial Approver" as FA
+actor "System Administrator" as SA
+actor "Auditor" as AU
+
+rectangle "Enterprise Contract Lifecycle Management System (ECLMS)" as ECLMS {
+
+}
+
+rectangle "External Systems" {
+
+  rectangle "ERP System" as ERP
+  rectangle "Identity Provider" as IDP
+  rectangle "Email Service" as EMAIL
+  rectangle "Digital Signature Service" as DSS
+  rectangle "File Storage Service" as FILE
+}
+
+CM --> ECLMS
+LR --> ECLMS
+FA --> ECLMS
+SA --> ECLMS
+AU --> ECLMS
+
+ECLMS --> ERP
+ECLMS --> IDP
+ECLMS --> EMAIL
+ECLMS --> DSS
+ECLMS --> FILE
+
+@enduml
