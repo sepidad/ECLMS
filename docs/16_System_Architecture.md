@@ -1,10 +1,10 @@
 
----
+#  16_System_Architecture.md 
 
-# 📄 16_System_Architecture.md 
-
-## System Architecture Specification (ECLMS)
-
+**Project:** Enterprise Contract Lifecycle Management System (ECLMS)  
+**Document ID:** ARC-016  
+**Version:** 1.0  
+**Status:** Draft
 ---
 
 # 1. Document Control
