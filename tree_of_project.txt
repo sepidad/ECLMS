@@ -1,5 +1,5 @@
 Folder PATH listing for volume Programming Learning
-Volume serial number is 000002D9 F825:C53E
+Volume serial number is 0000029F F825:C53E
 F:\PROJECTS\ECLMS
 |   .gitignore
 |   ARCHITECTURE.md
@@ -31,13 +31,55 @@ F:\PROJECTS\ECLMS
 |   |       ADR-002 - Why RBAC + ABAC.md
 |   |       ADR-003 - Why API First.md
 |   |       ADR-004 - Why Modular Monolith First.md
+|   |       ADR-005 - Why On-Premises First with Cloud Compatibility.md
 |   |       
 |   +---C4
+|   |   |   01_System_Context.md
+|   |   |   02_Container_View.md
+|   |   |   03_Component_View.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   |           01_System_Context.puml
+|   |           02_Container_View.puml
+|   |           03_Component_View.puml
+|   |           README.md
+|   |           styles.puml
+|   |           
 |   +---deployment
-|   |       Deployment_Architecture.md
-|   |       
-|   +---diagrams
+|   |   |   01_Deployment_Architecture.md
+|   |   |   02_Deployment_Topology.md
+|   |   |   03_Network_Architecture.md
+|   |   |   04_High_Availability.md
+|   |   |   05_Disaster_Recovery.md
+|   |   |   06_Backup_Strategy.md
+|   |   |   07_Scalability.md
+|   |   |   08_Observability.md
+|   |   |   09_Runtime_Configuration.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   |           deployment_topology.puml
+|   |           disaster_recovery.puml
+|   |           high_availability.puml
+|   |           network_architecture.puml
+|   |           observability.puml
+|   |           runtime_configuration.puml
+|   |           scalability.puml
+|   |           
 |   \---sequence
+|           01_Contract_Creation.md
+|           02_Approval_Workflow.md
+|           03_Contract_Execution.md
+|           04_Contract_Amendment.md
+|           05_Contract_Renewal.md
+|           06_Contract_Expiration.md
+|           07_Search_and_Retrieval.md
+|           08_Audit_Reconstruction.md
+|           09_Notification_Flow.md
+|           10_User_Authentication.md
+|           README.md
+|           
 +---assets
 |   +---diagrams
 |   +---icons
@@ -81,6 +123,7 @@ F:\PROJECTS\ECLMS
 |       26_Roadmap.md
 |       27_Traceability.md
 |       README.md
+|       tree_of_docs.txt
 |       
 +---examples
 |   +---Sample Import Files
