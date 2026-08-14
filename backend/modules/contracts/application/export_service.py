@@ -124,8 +124,15 @@ def add_rich_docx_content(document, html: str) -> None:
         for cell_index, text in enumerate(row): table.cell(row_index, cell_index).text = text
       continue
     tokens, block_style, list_kind = payload
-    style = 'List Bullet' if list_kind == 'ul' else 'List Number' if list_kind == 'ol' else None
-    paragraph = document.add_paragraph(style=style)
+    paragraph = document.add_paragraph()
+    if list_kind in {'ul', 'ol'}:
+      list_counter = list_counter + 1 if list_kind == previous_list_kind else 1
+      prefix = '• ' if list_kind == 'ul' else f'{list_counter}. '
+      paragraph.add_run(prefix)
+      previous_list_kind = list_kind
+    else:
+      previous_list_kind = None
+      list_counter = 0
     css = block_style.get('style', '')
     if 'text-align:center' in css: paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
     elif 'text-align:right' in css: paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -270,7 +277,10 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   def furniture(canvas, doc):
     canvas.saveState(); canvas.setFillColor(colors.HexColor('#64748B'))
     if header_image:
-      canvas.drawImage(header_image, 0.65 * inch, A4[1] - 1.25 * inch, width=A4[0] - 1.3 * inch, height=1.0 * inch, preserveAspectRatio=True, anchor='n', mask='auto')
+      header_width = A4[0] - 1.3 * inch
+      image_width, image_height = header_image.getSize()
+      header_height = header_width * image_height / image_width
+      canvas.drawImage(header_image, 0.65 * inch, A4[1] - 0.55 * inch - header_height, width=header_width, height=header_height, preserveAspectRatio=True, anchor='n', mask='auto')
     else:
       canvas.setFont('Helvetica', 8)
       canvas.drawRightString(A4[0] - 0.9 * inch, A4[1] - 0.48 * inch, 'ECLMS | CONTRACT DOCUMENT')
@@ -278,7 +288,11 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
     canvas.drawCentredString(A4[0] / 2, 0.42 * inch, f'Page {doc.page}')
     canvas.restoreState()
 
-  doc = BaseDocTemplate(out, pagesize=A4, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=1.45 * inch if header_image else 0.75 * inch, bottomMargin=0.65 * inch)
+  header_margin = 0.55 * inch
+  if header_image:
+    image_width, image_height = header_image.getSize()
+    header_margin += (A4[0] - 1.3 * inch) * image_height / image_width + 0.25 * inch
+  doc = BaseDocTemplate(out, pagesize=A4, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=header_margin if header_image else 0.75 * inch, bottomMargin=0.65 * inch)
   doc.addPageTemplates([PageTemplate(id='contract', frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')], onPage=furniture)])
   story = [Paragraph(title, title_style), Paragraph(f'{reference} | {counterparty}', ParagraphStyle('Meta', parent=body, alignment=TA_CENTER, textColor=colors.HexColor('#64748B'))), Spacer(1, 14)]
   numbered, _, _ = numbered_structure(_structure(version))
