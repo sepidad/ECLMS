@@ -61,3 +61,9 @@ class UserService:
 
   async def list_permissions(self) -> list[dict]:
     return await self._repository.list_permissions()
+
+  async def role_permissions(self, role_name: str) -> set[str]:
+    return await self._repository.role_permissions(role_name)
+
+  async def replace_role_permissions(self, role_name: str, permissions: set[str]) -> bool:
+    return await self._repository.replace_role_permissions(role_name, permissions)

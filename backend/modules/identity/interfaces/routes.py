@@ -47,6 +47,10 @@ class OIDCCallbackRequest(BaseModel):
   state: str
 
 
+class RolePermissionsRequest(BaseModel):
+  permissions: list[str]
+
+
 def _auth(request: Request) -> AuthService:
   return request.app.state.container.get_service('identity.auth')
 
@@ -138,3 +142,28 @@ async def list_roles(request: Request):
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
   return ok({'roles': roles, 'permissions': permissions}, get_trace_id())
+
+
+@router.get('/roles/{role_name}/permissions')
+async def role_permissions(role_name: str, request: Request):
+  try:
+    await require_permission(request, 'user.manage')
+    service = _users(request)
+    permissions = await service.role_permissions(role_name)
+    all_permissions = await service.list_permissions()
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'role': role_name, 'permissions': sorted(permissions), 'all_permissions': all_permissions}, get_trace_id())
+
+
+@router.put('/roles/{role_name}/permissions')
+async def replace_role_permissions(role_name: str, payload: RolePermissionsRequest, request: Request):
+  try:
+    await require_permission(request, 'user.manage')
+    if role_name == 'ADMIN':
+      raise ECLMSError('ROLE_PROTECTED', 'The ADMIN role cannot be reduced through this screen')
+    if not await _users(request).replace_role_permissions(role_name, set(payload.permissions)):
+      return err('NOT_FOUND', f'Role not found: {role_name}', get_trace_id())
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'role': role_name, 'permissions': sorted(set(payload.permissions))}, get_trace_id())

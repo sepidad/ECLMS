@@ -1055,7 +1055,7 @@ export default function App() {
         )}
 
         {activeTab === 'admin' && (
-          <AdminCenterTab user={user} users={users} onNavigate={tab => setActiveTab(tab as any)} onOpenSettings={() => setIsSettingsOpen(true)} />
+          <AdminCenterTab user={user} users={users} headers={headers} onNavigate={tab => setActiveTab(tab as any)} onOpenSettings={() => setIsSettingsOpen(true)} />
         )}
 
         {/* USERS TAB */}

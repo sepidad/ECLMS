@@ -14,6 +14,7 @@ from backend.modules.identity.domain.user import User
 from infrastructure.database.models.identity import (
   PermissionModel,
   RoleModel,
+  RolePermissionModel,
   UserModel,
   UserRoleModel,
 )
@@ -129,6 +130,24 @@ class SqlUserRepository:
       stmt = select(PermissionModel).order_by(PermissionModel.code)
       models = (await session.execute(stmt)).scalars().all()
       return [{'id': p.id, 'code': p.code, 'description': p.description} for p in models]
+
+  async def role_permissions(self, role_name: str) -> set[str]:
+    async with get_session_factory()() as session:
+      stmt = select(RoleModel).where(RoleModel.name == role_name).options(selectinload(RoleModel.permissions))
+      role = (await session.execute(stmt)).scalar_one_or_none()
+      return {permission.code for permission in role.permissions} if role else set()
+
+  async def replace_role_permissions(self, role_name: str, permissions: set[str]) -> bool:
+    async with get_session_factory()() as session:
+      role = (await session.execute(select(RoleModel).where(RoleModel.name == role_name))).scalar_one_or_none()
+      if role is None:
+        return False
+      await session.execute(RolePermissionModel.__table__.delete().where(RolePermissionModel.role_id == role.id))
+      valid = (await session.execute(select(PermissionModel).where(PermissionModel.code.in_(permissions)))).scalars().all()
+      for permission in valid:
+        session.add(RolePermissionModel(role_id=role.id, permission_id=permission.id))
+      await session.commit()
+      return True
 
   async def get_role_by_name(self, name: str) -> dict | None:
     async with get_session_factory()() as session:
