@@ -12,6 +12,7 @@ import SystemHealthTab from './components/SystemHealthTab';
 import DataImportTab from './components/DataImportTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import DashboardTab from './components/DashboardTab';
+import GuaranteesTab from './components/GuaranteesTab';
 import ApprovalInbox from './components/ApprovalInbox';
 import AdminCenterTab from './components/AdminCenterTab';
 import { downloadAuthenticated } from './download';
@@ -88,7 +89,7 @@ interface Workflow {
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('eclms_token'));
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'contracts' | 'approvals' | 'workflows' | 'users' | 'admin' | 'notifications' | 'audit' | 'reporting' | 'intelligence' | 'finances' | 'obligations' | 'imports' | 'integrations' | 'system'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'contracts' | 'approvals' | 'workflows' | 'users' | 'admin' | 'notifications' | 'audit' | 'reporting' | 'intelligence' | 'finances' | 'obligations' | 'guarantees' | 'imports' | 'integrations' | 'system'>('dashboard');
   
   // Auth state
   const [username, setUsername] = useState('admin');
@@ -675,6 +676,7 @@ export default function App() {
           { id: 'approvals', label: 'Approval Inbox', icon: CheckCircle2 },
           { id: 'workflows', label: 'Workflows & Approvals', icon: GitBranch },
           { id: 'obligations', label: 'Obligations', icon: ClipboardCheck },
+          { id: 'guarantees', label: 'Guarantees', icon: Shield },
           { id: 'finances', label: 'Finance', icon: Wallet },
           { id: 'users', label: 'Users & RBAC', icon: Users },
           { id: 'admin', label: 'Admin Center', icon: Settings },
@@ -1026,6 +1028,8 @@ export default function App() {
         {activeTab === 'obligations' && (
           <ObligationsTab headers={headers} contracts={contracts} />
         )}
+
+        {activeTab === 'guarantees' && <GuaranteesTab headers={headers} contracts={contracts} />}
 
         {/* FINANCE TAB */}
         {activeTab === 'finances' && (
