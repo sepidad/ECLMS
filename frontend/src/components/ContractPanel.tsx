@@ -22,6 +22,7 @@ interface ContractDetail {
 interface Version { id: string; version_number: number; title: string; counterparty: string; content: string | null; is_active: boolean; created_at: string; }
 interface DocumentItem { id: string; contract_id: string; doc_type: string; title: string; created_at: string; version_count?: number; }
 interface WorkflowSummary { id: string; contract_id: string; status: string; current_step?: string; current_step_role?: string; steps: { name: string; status: string; assigned_role: string }[]; }
+interface Feedback { id: string; version_id: string; reviewer_id: string; reviewer_role: string; kind: string; body: string; proposed_text?: string; status: string; created_at: string; }
 
 const stateSt = (s: string) => {
   switch (s) {
@@ -68,6 +69,9 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
   const [file, setFile] = useState<File | null>(null);
   const [reviewProvider, setReviewProvider] = useState('rules');
   const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState<Feedback[]>([]);
+  const [mergeContent, setMergeContent] = useState('');
+  const [mergeTarget, setMergeTarget] = useState<Feedback | null>(null);
 
   const api = async (path: string, opts: RequestInit = {}) => {
     const res = await fetch(path, { ...opts, headers });
@@ -92,8 +96,37 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
         const running = await api(`/api/v1/workflows?status=RUNNING&limit=200`);
         setWorkflow((running.items || []).find((item: WorkflowSummary) => item.contract_id === contractId) || null);
       } catch { setWorkflow(null); }
+      try {
+        const reviewItems = await api(`/api/v1/contracts/${contractId}/feedback`);
+        setFeedback(reviewItems.items || []);
+      } catch { setFeedback([]); }
     } catch (e: any) { setError(e.message || 'Unable to load contract'); }
     finally { setLoading(false); }
+  };
+
+  const decideFeedback = async (item: Feedback, status: 'ACCEPTED' | 'REJECTED') => {
+    setError(''); setMsg('');
+    try {
+      await api(`/api/v1/contracts/feedback/${item.id}/decision`, {
+        method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
+      });
+      setMsg(`Feedback ${status.toLowerCase()}`);
+      await load();
+    } catch (e: any) { setError(e.message); }
+  };
+
+  const mergeFeedback = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mergeTarget) return;
+    setError(''); setMsg('');
+    try {
+      await api(`/api/v1/contracts/${contractId}/feedback/${mergeTarget.id}/merge`, {
+        method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ new_content: mergeContent }),
+      });
+      setMergeTarget(null); setMergeContent(''); setMsg('Accepted feedback merged into a new official version');
+      await load();
+      if (onUpdated) onUpdated();
+    } catch (e: any) { setError(e.message); }
   };
 
   useEffect(() => { load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [contractId]);
@@ -403,6 +436,29 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
             </div>
           )}
         </div>
+      </div>
+
+      <div style={{ marginTop: '24px', borderTop: '1px solid #e2e8f0', paddingTop: '18px' }}>
+        <h3 style={{ fontSize: '15px', margin: '0 0 12px' }}>Review feedback and manager merge</h3>
+        {feedback.length === 0 ? <div style={{ fontSize: '12px', color: '#94a3b8' }}>No legal or financial feedback has been submitted.</div> : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {feedback.map(item => <div key={item.id} style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '10px', background: item.status === 'OPEN' ? '#fff' : '#f8fafc' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px' }}><strong>{item.reviewer_role} · {item.kind}</strong><span style={pill(item.status)}>{item.status}</span></div>
+              <div style={{ fontSize: '12px', color: '#475569', margin: '6px 0' }}>{item.body}</div>
+              {item.proposed_text && <pre style={{ whiteSpace: 'pre-wrap', fontSize: '11px', background: '#f1f5f9', padding: '8px', borderRadius: '5px' }}>{item.proposed_text}</pre>}
+              {item.status === 'OPEN' && <div style={{ display: 'flex', gap: '6px' }}>
+                {item.kind === 'SUGGESTION' && <button onClick={() => { setMergeTarget(item); setMergeContent(item.proposed_text || ''); }} style={btn('primary')}>Merge as new version</button>}
+                <button onClick={() => decideFeedback(item, 'ACCEPTED')} style={btn('outline')}>Accept</button>
+                <button onClick={() => decideFeedback(item, 'REJECTED')} style={btn('ghost')}>Reject</button>
+              </div>}
+            </div>)}
+          </div>
+        )}
+        {mergeTarget && <form onSubmit={mergeFeedback} style={{ marginTop: '14px', padding: '12px', background: '#f5f3ff', borderRadius: '8px' }}>
+          <strong style={{ fontSize: '13px' }}>Review the official version before publishing</strong>
+          <textarea value={mergeContent} onChange={e => setMergeContent(e.target.value)} rows={8} required style={{ ...input(), margin: '10px 0', fontFamily: 'monospace', fontSize: '12px' }} />
+          <div style={{ display: 'flex', gap: '8px' }}><button type="submit" style={btn('primary')}>Publish new official version</button><button type="button" onClick={() => setMergeTarget(null)} style={btn('ghost')}>Cancel</button></div>
+        </form>}
       </div>
     </div>
   );
