@@ -6,5 +6,6 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM caddy:2-alpine
-COPY --from=frontend-build /frontend/dist /srv
+FROM nginx:1.27-alpine
+COPY --from=frontend-build /frontend/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf

@@ -21,11 +21,15 @@ http://eclms.localhost, http://localhost, http://127.0.0.1 {
   # Frontend static files when built into the image (optional).
   root * /srv
 
-  reverse_proxy /api/* http://api:8000
-
-  # Pass through health checks without caching.
-  @health {
-    path /health
+  handle /health {
+    reverse_proxy http://api:8000
   }
-  reverse_proxy @health http://api:8000
+
+  handle /api/* {
+    reverse_proxy http://api:8000
+  }
+
+  handle {
+    file_server
+  }
 }
