@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import timedelta
 
 from backend.core.utils import utc_now
 from backend.modules.contracts.domain.guarantee import Guarantee
