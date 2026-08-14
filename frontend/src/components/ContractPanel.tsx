@@ -74,7 +74,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
   const [mergeTarget, setMergeTarget] = useState<Feedback | null>(null);
 
   const api = async (path: string, opts: RequestInit = {}) => {
-    const res = await fetch(path, { ...opts, headers });
+    const res = await fetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
     const data = await res.json();
     if (!data.success) throw new Error(data.error?.message || 'Request failed');
     return data.data;

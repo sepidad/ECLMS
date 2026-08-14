@@ -125,6 +125,7 @@ export default function App() {
   const [newTitle, setNewTitle] = useState('');
   const [newRef, setNewRef] = useState('');
   const [newCounterparty, setNewCounterparty] = useState('');
+  const [newContent, setNewContent] = useState('');
   const [newDefId, setNewDefId] = useState('contract-approval');
   
   const [newUsername, setNewUsername] = useState('');
@@ -440,13 +441,14 @@ export default function App() {
       const res = await fetch('/api/v1/contracts', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ title: newTitle, reference_number: newRef, counterparty: newCounterparty })
+        body: JSON.stringify({ title: newTitle, reference_number: newRef, counterparty: newCounterparty, content: newContent || null })
       });
       const data = await res.json();
       if (data.success) {
         setNewTitle('');
         setNewRef('');
         setNewCounterparty('');
+        setNewContent('');
         fetchContracts();
       } else {
         alert(data.error?.message || 'Failed to create contract');
@@ -454,6 +456,15 @@ export default function App() {
     } catch (e: any) {
       alert(e.message);
     }
+  };
+
+  const applyContractTemplate = (template: any) => {
+    setNewTitle(template.name || 'New contract');
+    setNewRef(`${String(template.contract_type || 'CONTRACT').slice(0, 8)}-2026-001`);
+    setNewCounterparty('');
+    setNewContent(template.content_template || '');
+    setSelectedContractId(null);
+    setActiveTab('contracts');
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -761,7 +772,7 @@ export default function App() {
           <>
           <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><div><h2 style={{ margin: 0, fontSize: '18px' }}>Contract Template Library</h2><p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>Reusable structures for fields, clauses, reviewers, SLAs, and required guarantees.</p></div><button onClick={fetchTemplates} style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '7px 11px', borderRadius: '6px', cursor: 'pointer' }}>Refresh templates</button></div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', marginTop: '14px' }}>{templates.map(template => <div key={template.key} style={{ border: '1px solid #ddd6fe', background: '#faf5ff', borderRadius: '8px', padding: '12px' }}><strong style={{ color: '#4c1d95' }}>{template.name}</strong><p style={{ fontSize: '12px', color: '#64748b', margin: '5px 0 9px' }}>{template.description}</p><div style={{ fontSize: '11px', color: '#475569' }}><strong>Fields:</strong> {(template.fields || []).map((f: any) => f.label).join(', ')}</div><div style={{ fontSize: '11px', color: '#475569', marginTop: '4px' }}><strong>Guarantees:</strong> {(template.required_guarantees || []).join(', ') || 'None'}</div></div>)}</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', marginTop: '14px' }}>{templates.map(template => <div key={template.key} style={{ border: '1px solid #ddd6fe', background: '#faf5ff', borderRadius: '8px', padding: '12px' }}><strong style={{ color: '#4c1d95' }}>{template.name}</strong><span style={{ marginLeft: '8px', fontSize: '10px', color: '#6d28d9', fontWeight: 700 }}>{template.contract_type}</span><p style={{ fontSize: '12px', color: '#64748b', margin: '5px 0 9px' }}>{template.description}</p><div style={{ fontSize: '11px', color: '#475569' }}><strong>Fields:</strong> {(template.fields || []).map((f: any) => f.label).join(', ')}</div><div style={{ fontSize: '11px', color: '#475569', marginTop: '4px' }}><strong>Guarantees:</strong> {(template.required_guarantees || []).join(', ') || 'None'}</div><button type="button" onClick={() => applyContractTemplate(template)} style={{ marginTop: '10px', background: '#7c3aed', color: '#fff', border: 'none', borderRadius: '6px', padding: '7px 10px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}>Use this template</button></div>)}</div>
           </section>
           {selectedContractId && (
             <ContractPanel
@@ -871,6 +882,10 @@ export default function App() {
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Counterparty</label>
                     <input type="text" value={newCounterparty} onChange={e => setNewCounterparty(e.target.value)} required placeholder="e.g. Acme Corp" style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Contract content</label>
+                    <textarea value={newContent} onChange={e => setNewContent(e.target.value)} rows={8} placeholder="Use a template above or enter the initial contract structure…" style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Initial Workflow Blueprint</label>
