@@ -1,0 +1,97 @@
+# Production overlay for ECLMS.
+# Activate with: docker compose --profile production up -d
+# This file adds resource limits, scales the API, and switches to
+# durable Redis-backed event transport for multi-replica deployments.
+
+services:
+  api:
+    profiles:
+      - production
+    # Example: uncomment the next line to run 2 API replicas (add more
+    # if traffic grows; pair with a distributed rate limiter or sticky
+    # sessions when you move beyond the in-process fixed-window limiter).
+    # deploy:
+    #   replicas: 2
+    # Resource limits to prevent any single container from consuming all
+    # host memory / CPU. Adjust to your deployment target.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    # In a multi-replica deployment the in-process event bus must be
+    # replaced with the durable Redis transport so deliveries are not
+    # lost between restarts.  The app reads ECLMS_EVENT_TRANSPORT=redis
+    # to enable it.
+    environment:
+      ECLMS_EVENT_TRANSPORT: redis
+      ECLMS_DATABASE_POOL_PRE_PING: 'true'
+      ECLMS_DATABASE_POOL_RECYCLE: '3600'
+
+  db:
+    profiles:
+      - production
+    # Reserve enough disk and CPU for Postgres under sustained load.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+
+  redis:
+    profiles:
+      - production
+    # Redis durability: persist on disk every 60s if there are changes.
+    command: >
+      redis-server
+      --appendonly yes
+      --save 60 1
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
+  keycloak:
+    profiles:
+      - production
+    # Keycloak needs a bit more memory at scale.
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1024M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    # Production Keycloak recommends JVM tune-ables; expose them here
+    # for environments where the default JVM isn't sufficient.
+    environment:
+      KC_PROXY: edge
+      JAVA_OPTS_APPEND: >-
+        -Xms128m
+        -Xmx512m
+
+  proxy:
+    profiles:
+      - production
+    # Caddy gets a small headroom limit.
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M

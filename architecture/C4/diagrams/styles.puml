@@ -1,0 +1,52 @@
+@startuml
+
+' =========================
+' ECLMS Diagram Stylesheet
+' =========================
+
+' ---- Skin Settings ----
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+
+skinparam roundcorner 8
+skinparam dpi 160
+
+' ---- Colors ----
+!define PRIMARY #2E3A59
+!define SECONDARY #4F6D7A
+!define ACCENT #56A3A6
+!define WARNING #E07A5F
+!define LIGHT #F4F4F9
+
+' ---- System Styling ----
+skinparam rectangle {
+  BackgroundColor LIGHT
+  BorderColor PRIMARY
+}
+
+skinparam component {
+  BackgroundColor #FFFFFF
+  BorderColor SECONDARY
+}
+
+skinparam database {
+  BackgroundColor #FFF3B0
+  BorderColor WARNING
+}
+
+skinparam actor {
+  BackgroundColor #D9ED92
+  BorderColor ACCENT
+}
+
+' ---- Arrow Styling ----
+skinparam arrow {
+  Color PRIMARY
+  Thickness 1.2
+}
+
+' ---- Title ----
+title ECLMS Architecture Diagram (C4 Model)
+
+@enduml

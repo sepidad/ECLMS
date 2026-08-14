@@ -1,0 +1,45 @@
+{
+  "realm": "eclms",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 600,
+  "defaultRoles": ["default-roles-eclms"],
+  "clients": [
+    {
+      "clientId": "eclms-api",
+      "enabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "authorizationServicesEnabled": false,
+      "redirectUris": [
+        "http://localhost:8000/api/v1/identity/auth/oidc/callback",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": ["*"],
+      "secret": "eclms-dev-secret"
+    }
+  ],
+  "users": [
+    {
+      "username": "oidcdemo",
+      "enabled": true,
+      "email": "oidcdemo@eclms.local",
+      "firstName": "OIDC",
+      "lastName": "Demo",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "oidcdemo",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

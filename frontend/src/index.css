@@ -1,0 +1,276 @@
+:root {
+  --text: #6b6375;
+  --text-h: #08060d;
+  --bg: #fff;
+  --border: #e5e4e7;
+  --code-bg: #f4f3ec;
+  --accent: #aa3bff;
+  --accent-bg: rgba(170, 59, 255, 0.1);
+  --accent-border: rgba(170, 59, 255, 0.5);
+  --social-bg: rgba(244, 243, 236, 0.5);
+  --shadow:
+    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light dark;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  border-inline: 1px solid var(--border);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+.contract-workspace__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 180px;
+  justify-content: center;
+}
+
+.contract-workspace__state span {
+  color: #64748b;
+  font-size: 13px;
+  text-align: center;
+}
+
+.contract-workspace__spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e9d5ff;
+  border-top-color: #7c3aed;
+  border-radius: 50%;
+  animation: contract-spin .8s linear infinite;
+}
+
+.contract-workspace__lifecycle {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin: 4px 0 26px;
+}
+
+.contract-workspace__lifecycle-line {
+  position: absolute;
+  top: 13px;
+  left: 8%;
+  right: 8%;
+  height: 3px;
+  background: #e2e8f0;
+  z-index: 0;
+}
+
+.contract-workspace__lifecycle-line span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #22c55e);
+  transition: width .35s ease;
+}
+
+.contract-workspace__lifecycle-step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.contract-workspace__lifecycle-step span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  color: #94a3b8;
+}
+
+.contract-workspace__lifecycle-step.is-complete span {
+  background: #ede9fe;
+  border-color: #a78bfa;
+  color: #6d28d9;
+}
+
+.contract-workspace__lifecycle-step.is-current {
+  color: #6d28d9;
+}
+
+.contract-workspace__lifecycle-step.is-current span {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #fff;
+  box-shadow: 0 0 0 4px #ede9fe;
+}
+
+.contract-workspace__approval-summary {
+  margin-top: 18px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #faf5ff, #f8fafc);
+  border: 1px solid #e9d5ff;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.contract-workspace__eyebrow {
+  color: #7c3aed;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.contract-workspace__approval-summary > div {
+  min-width: 150px;
+  flex: 1;
+}
+
+.contract-workspace__approval-summary strong {
+  color: #334155;
+  font-size: 13px;
+}
+
+.contract-workspace__approval-role {
+  color: #64748b;
+  font-size: 11px;
+}
+
+@keyframes contract-spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 900px) {
+  .dashboard-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  .dashboard-chart-grid { grid-template-columns: 1fr !important; }
+  .contract-workspace { padding: 18px !important; }
+  .contract-workspace__overview,
+  .contract-workspace__analysis { grid-template-columns: 1fr !important; gap: 18px !important; }
+}
+
+@media (max-width: 600px) {
+  .dashboard-hero {
+    align-items: flex-start !important;
+    flex-direction: column !important;
+    padding: 22px 20px !important;
+  }
+
+  .dashboard-hero__risk {
+    align-self: center;
+    min-width: 118px !important;
+    width: 118px;
+    height: 118px !important;
+  }
+
+  .dashboard-stat-grid { grid-template-columns: 1fr !important; }
+  .contract-workspace__header { align-items: flex-start !important; gap: 12px; }
+  .contract-workspace__header > div { min-width: 0; }
+  .contract-workspace__header button { flex-shrink: 0; }
+  .contract-workspace__lifecycle { gap: 2px; margin-bottom: 20px; }
+  .contract-workspace__lifecycle-step small { font-size: 8px; line-height: 1.1; }
+  .contract-workspace__lifecycle-line { left: 7%; right: 7%; }
+  .contract-workspace__upload { flex-wrap: wrap; }
+  .contract-workspace__upload select,
+  .contract-workspace__upload input,
+  .contract-workspace__upload button { width: 100% !important; flex: auto !important; }
+  .contract-workspace__document { align-items: flex-start !important; gap: 8px; flex-wrap: wrap; }
+  .contract-workspace__document > button { margin-left: auto; }
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}

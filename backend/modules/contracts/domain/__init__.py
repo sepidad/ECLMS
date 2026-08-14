@@ -1,0 +1,1 @@
+"""Contracts module domain package."""

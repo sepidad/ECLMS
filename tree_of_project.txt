@@ -1,0 +1,322 @@
+Folder PATH listing for volume Programming Learning
+Volume serial number is 00000237 F825:C53E
+F:\PROJECTS\ECLMS
+|   .gitignore
+|   ARCHITECTURE.md
+|   CHANGELOG.md
+|   CODE_OF_CONDUCT.md
+|   CONTRIBUTING.md
+|   LICENSE
+|   PROJECT_LIFECYCLE.md
+|   PROJECT_STATE.md
+|   README.md
+|   SESSION_LOG.md
+|   tree_of_project.txt
+|   
++---agents
+|       Architect.md
+|       Backend.md
+|       Business_Analyst.md
+|       Database.md
+|       Frontend.md
+|       QA.md
+|       Reviewer.md
+|       Security.md
+|       
++---architecture
+|   |   README.md
+|   |   
+|   +---ADR
+|   |       ADR-001 - Why PostgreSQL.md
+|   |       ADR-002 - Why RBAC + ABAC.md
+|   |       ADR-003 - Why API First.md
+|   |       ADR-004 - Why Modular Monolith First.md
+|   |       ADR-005 - Why On-Premises First with Cloud Compatibility.md
+|   |       
+|   +---C4
+|   |   |   01_System_Context.md
+|   |   |   02_Container_View.md
+|   |   |   03_Component_View.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   |           01_System_Context.puml
+|   |           02_Container_View.puml
+|   |           03_Component_View.puml
+|   |           README.md
+|   |           styles.puml
+|   |           
+|   +---data
+|   |       01_Data_Architecture.md
+|   |       02_Data_Lifecycle.md
+|   |       03_Data_Retention_Model.md
+|   |       04_Data_Classification.md
+|   |       05_Data_Governance_Model.md
+|   |       06_Data_Flow_Architecture.md
+|   |       README.md
+|   |       
+|   +---deployment
+|   |   |   01_Deployment_Architecture.md
+|   |   |   02_Deployment_Topology.md
+|   |   |   03_Network_Architecture.md
+|   |   |   04_High_Availability.md
+|   |   |   05_Disaster_Recovery.md
+|   |   |   06_Backup_Strategy.md
+|   |   |   07_Scalability.md
+|   |   |   08_Observability.md
+|   |   |   09_Runtime_Configuration.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   |           deployment_topology.puml
+|   |           disaster_recovery.puml
+|   |           high_availability.puml
+|   |           network_architecture.puml
+|   |           observability.puml
+|   |           runtime_configuration.puml
+|   |           scalability.puml
+|   |           
+|   +---integration
+|   |   |   01_Integration_Architecture.md
+|   |   |   02_External_Systems_Model.md
+|   |   |   03_API_Gateway_Architecture.md
+|   |   |   04_Event_Architecture.md
+|   |   |   05_Email_Integration.md
+|   |   |   06_Document_Integration.md
+|   |   |   07_Identity_Integration.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   +---operations
+|   |       01_Operations_Architecture.md
+|   |       02_Logging_Model.md
+|   |       03_Monitoring_Model.md
+|   |       04_Alerting_Model.md
+|   |       05_SRE_Model.md
+|   |       06_Release_Management_Architecture.md
+|   |       README.md
+|   |       
+|   +---performance
+|   |   |   01_Performance_Architecture.md
+|   |   |   02_Caching_Strategy.md
+|   |   |   03_Query_Performance_Model.md
+|   |   |   04_Background_Processing_Model.md
+|   |   |   05_Latency_Budgeting.md
+|   |   |   06_Performance_Testing_Model.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   +---security
+|   |   |   01_Security_Architecture.md
+|   |   |   02_Authentication_Architecture.md
+|   |   |   03_Authorization_Architecture.md
+|   |   |   04_Threat_Model.md
+|   |   |   05_Cryptography_Architecture.md
+|   |   |   06_Secrets_Management.md
+|   |   |   07_Key_Management.md
+|   |   |   08_Audit_Security_Model.md
+|   |   |   09_Security_Zones.md
+|   |   |   README.md
+|   |   |   
+|   |   \---diagrams
+|   \---sequence
+|           01_Contract_Creation.md
+|           02_Approval_Workflow.md
+|           03_Contract_Execution.md
+|           04_Contract_Amendment.md
+|           05_Contract_Renewal.md
+|           06_Contract_Expiration.md
+|           07_Search_and_Retrieval.md
+|           08_Audit_Reconstruction.md
+|           09_Notification_Flow.md
+|           10_User_Authentication.md
+|           README.md
+|           
++---assets
+|   +---diagrams
+|   +---icons
+|   +---logo
+|   +---screenshots
+|   \---wireframes
++---checklists
+|       Architecture.md
+|       Module.md
+|       Release.md
+|       Requirements.md
+|       Security.md
+|       
++---docs
+|       00_Project_Constitution.md
+|       01_Vision.md
+|       02_Product_Charter.md
+|       03_Product_Principles.md
+|       04_Engineering_Philosophy.md
+|       05_Project_Scope.md
+|       06_Actors.md
+|       07_Roles.md
+|       08_Permission_Model.md
+|       09_Organizational_Structure.md
+|       10_User_Stories.md
+|       11_Functional_Requirements.md
+|       12_Non_Functional_Requirements.md
+|       13_Business_Rules.md
+|       14_Business_Workflows.md
+|       15_Modules.md
+|       16_System_Architecture.md
+|       17_Core_Concepts.md
+|       18_Domain_Model.md
+|       19_Data_Model_Design.md
+|       20_API_Design.md
+|       21_User_Interface_Guidelines.md
+|       22_Reporting_Analytics.md
+|       23_Security_Architecture.md
+|       24_Audit_Trail.md
+|       25_Test_Strategy.md
+|       26_Roadmap.md
+|       27_Traceability.md
+|       README.md
+|       tree_of_docs.txt
+|       
++---examples
+|   +---Sample Import Files
+|   +---Sample PDFs
+|   +---Sample Reports
+|   +---Sample Workflows
+|   \---Sample_Contracts
++---glossary
+|       Business.md
+|       Legal.md
+|       Technical.md
+|       
++---governance
+|   |   Branching_Strategy.md
+|   |   Contribution_Process.md
+|   |   Decision_Process.md
+|   |   Deprecation_Policy.md
+|   |   Release_Process.md
+|   |   Versioning.md
+|   |   
+|   \---RFC
+|           RFC-001.md
+|           RFC-002.md
+|           
++---knowledge
+|   |   CLM_Concepts.md
+|   |   Industry_Knowledge.md
+|   |   
+|   +---Competitor_Analysis
+|   \---Research
++---meetings
+|       2026-07-02.md
+|       2026-07-05.md
+|       Architecture Review.md
+|       
++---meta
+|       Documentation_Map.md
+|       Identification_Standard.md
+|       Project_Timeline.md
+|       Repository_Map.md
+|       Traceability_Map.md
+|       Traceability_Standard.md
+|       
++---metrics
+|       Architecture.md
+|       Coverage.md
+|       Performance.md
+|       Quality.md
+|       
++---playbooks
+|       How to Add a Module.md
+|       How to Add a Report.md
+|       How to Design a Permission.md
+|       How to Design a Workflow.md
+|       How to Write an ADR.md
+|       README.md
+|       
++---product
+|       Feature Backlog.md
+|       Future Vision.md
+|       Ideas.md
+|       Parking Lot.md
+|       Release Backlog.md
+|       
++---prompts
+|       Backend.md
+|       Database.md
+|       Documentation.md
+|       Frontend.md
+|       Master.md
+|       Refactoring.md
+|       Review.md
+|       Security.md
+|       Testing.md
+|       
++---prototypes
+|   +---Dashboard
+|   +---Desktop
+|   +---Mobile
+|   \---PDF
++---quality
+|       Architecture_Checklist.md
+|       Definition_of_Done.md
+|       Release_Checklist.md
+|       Review_Checklist.md
+|       Security_Checklist.md
+|       
++---research
+|   |   README.md
+|   |   
+|   +---AI
+|   +---Digital Signature
+|   +---ElasticSearch
+|   +---OCR
+|   \---RBAC
++---scripts
+|   +---backup
+|   +---database
+|   +---deployment
+|   \---migration
++---specifications
+|       Approval_Workflow_Spec.md
+|       Authentication_Spec.md
+|       Contract_Management_Specification.md
+|       Notification_Spec.md
+|       README.md
+|       Search_Spec.md
+|       
++---standards
+|       Accessibility_Standards.md
+|       API_Standards.md
+|       Coding_Standards.md
+|       Database_Standards.md
+|       Documentation_Standards.md
+|       Error_Handling_Standards.md
+|       Git_Workflow.md
+|       Localization_Standards.md
+|       Logging_Standards.md
+|       Naming_Convention.md
+|       Performance_Standards.md
+|       README.md
+|       Security_Standards.md
+|       Testing_Standards.md
+|       UI_Standards.md
+|       
++---templates
+|       ADR_Template.md
+|       Decision_Template.md
+|       Module_Template.md
+|       Requirement_Template.md
+|       RFC_Template.md
+|       Workflow_Template.md
+|       
++---test-data
+|   +---contracts
+|   +---documents
+|   +---permissions
+|   +---users
+|   \---vendors
+\---tools
+        ERD Generator.md
+        Permission Matrix Generator.md
+        Schema Validator.md
+        

@@ -1,0 +1,1 @@
+"""Empty placeholder - finances uses direct imports."""

@@ -1,0 +1,118 @@
+services:
+  db:
+    image: postgres:16
+    container_name: eclms-compose-postgres
+    environment:
+      POSTGRES_USER: eclms
+      POSTGRES_PASSWORD: eclms
+      POSTGRES_DB: eclms
+    ports:
+      - '5433:5432'
+    volumes:
+      - eclms-compose-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U eclms -d eclms']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: eclms-compose-redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - eclms-compose-redisdata:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build: .
+    container_name: eclms-compose-api
+    ports:
+      - '8000:8000'
+    environment:
+      ECLMS_ENVIRONMENT: development
+      ECLMS_DATABASE_URL: postgresql+asyncpg://eclms:eclms@db:5432/eclms
+      ECLMS_EVENT_TRANSPORT: memory
+      ECLMS_REDIS_URL: redis://redis:6379/0
+      ECLMS_SCHEDULER_ENABLED: 'true'
+      ECLMS_ESCALATION_INTERVAL_MINUTES: '1'
+      ECLMS_EMAIL_ENABLED: 'true'
+      ECLMS_STORAGE_ROOT: /app/var/storage
+      ECLMS_TRUSTED_PROXY: 'true'
+      ECLMS_RATE_LIMIT_ENABLED: 'true'
+      ECLMS_RATE_LIMIT_REQUESTS: '300'
+      ECLMS_RATE_LIMIT_WINDOW_SECONDS: '60'
+      ECLMS_MAX_REQUEST_BYTES: '20971520'
+      ECLMS_OIDC_ENABLED: 'true'
+      ECLMS_OIDC_ISSUER: http://localhost:8080/realms/eclms
+      ECLMS_OIDC_INTERNAL_ISSUER: http://keycloak:8080/realms/eclms
+      ECLMS_OIDC_CLIENT_ID: eclms-api
+      ECLMS_OIDC_CLIENT_SECRET: eclms-dev-secret
+      ECLMS_OIDC_REDIRECT_URI: http://localhost:8000/api/v1/identity/auth/oidc/callback
+      ECLMS_OIDC_DEFAULT_ORG: org-default
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - eclms-compose-storage:/app/var/storage
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request,os; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: eclms-compose-keycloak
+    # Start in dev mode (embedded H2) and import the demo realm on first start.
+    command: ['start-dev', '--import-realm']
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_REALM_NAME: eclms
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./deploy/keycloak/realm-eclms.json:/opt/keycloak/data/import/realm-eclms.json:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'exec 3<>/dev/tcp/127.0.0.1/8080; echo -e "GET /realms/eclms HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r" >&3; cat <&3 | head -n 1 | grep -q 200']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  proxy:
+    image: caddy:2-alpine
+    container_name: eclms-compose-proxy
+    ports:
+      - '443:443'
+      - '80:80'
+      - '443:443/udp'
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - eclms-caddy-data:/data
+    depends_on:
+      - api
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--no-check-certificate', '-O', '/dev/null', 'https://localhost/api/v1/identity/roles']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  eclms-compose-pgdata:
+  eclms-compose-redisdata:
+  eclms-compose-storage:
+  eclms-caddy-data:

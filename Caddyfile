@@ -1,0 +1,32 @@
+# ECLMS reverse proxy (TLS termination).
+#
+# Local development uses Caddy's internal CA (self-signed).  For production,
+# set a real domain and Caddy will issue + renew Let's Encrypt certificates
+# automatically; keep the ECLMS_* upstream configuration below.
+#
+# The API binds to the compose network as `api`, so the reverse proxy calls
+# http://api:8000 (no external network exposure needed).
+
+{
+  # Log to stdout in a readable format
+  log {
+    output stdout
+    format console
+  }
+}
+
+# Local/TLS entrypoint.  Replace with your public hostname in production.
+eclms.localhost, localhost {
+  tls internal
+
+  # Frontend static files when built into the image (optional).
+  root * /srv
+
+  reverse_proxy /api/* http://api:8000
+
+  # Pass through health checks without caching.
+  @health {
+    path /health
+  }
+  reverse_proxy @health http://api:8000
+}

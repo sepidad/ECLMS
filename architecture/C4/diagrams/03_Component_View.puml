@@ -1,0 +1,35 @@
+@startuml
+
+!include styles.puml
+
+rectangle "Backend API (Modular Monolith)" {
+
+  component "Contract Module" as CONTRACT
+  component "Workflow Engine" as WORKFLOW
+  component "Approval Module" as APPROVAL
+  component "Document Module" as DOC
+  component "Audit Module" as AUDIT
+  component "Notification Module" as NOTIF
+  component "Security Module" as SECURITY
+  component "Reporting Module" as REPORT
+  component "Administration Module" as ADMIN
+  component "Configuration Module" as CONFIG
+}
+
+CONTRACT --> WORKFLOW
+WORKFLOW --> APPROVAL
+APPROVAL --> AUDIT
+
+CONTRACT --> DOC
+CONTRACT --> AUDIT
+
+SECURITY --> CONTRACT
+SECURITY --> APPROVAL
+SECURITY --> AUDIT
+
+NOTIF --> WORKFLOW
+REPORT --> AUDIT
+
+ADMIN --> CONFIG
+
+@enduml
