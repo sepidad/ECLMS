@@ -212,6 +212,7 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, PageBreak, Spacer, Table, TableStyle
 
   header_image = None
+  footer_image = None
   if template_bytes:
     from zipfile import ZipFile
     try:
@@ -221,15 +222,17 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
           from reportlab.lib.utils import ImageReader
           from PIL import Image
           source = Image.open(BytesIO(archive.read(image_names[0]))).convert('RGB')
-          # The supplied letterhead asset is a full A4 page image. Its actual
-          # header occupies the top ~20%; the footer is intentionally omitted
-          # here because the PDF renderer supplies its own page footer.
-          crop_height = min(source.height, max(500, int(source.height * 0.21)))
-          cropped = source.crop((0, 0, source.width, crop_height))
-          cropped_bytes = BytesIO(); cropped.save(cropped_bytes, format='PNG'); cropped_bytes.seek(0)
-          header_image = ImageReader(cropped_bytes)
+          # The uploaded Word letterhead is a full-page image. Extract the
+          # actual header and footer bands instead of scaling the entire page.
+          header_crop = source.crop((0, 90, source.width, 550))
+          footer_crop = source.crop((0, 3260, source.width, 3535))
+          header_bytes = BytesIO(); header_crop.save(header_bytes, format='PNG'); header_bytes.seek(0)
+          footer_bytes = BytesIO(); footer_crop.save(footer_bytes, format='PNG'); footer_bytes.seek(0)
+          header_image = ImageReader(header_bytes)
+          footer_image = ImageReader(footer_bytes)
     except Exception:  # noqa: BLE001 - a malformed optional header must not block PDF export
       header_image = None
+      footer_image = None
 
   out = BytesIO()
   styles = getSampleStyleSheet()
@@ -277,22 +280,31 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   def furniture(canvas, doc):
     canvas.saveState(); canvas.setFillColor(colors.HexColor('#64748B'))
     if header_image:
-      header_width = A4[0] - 1.3 * inch
+      header_width = A4[0] - 0.8 * inch
       image_width, image_height = header_image.getSize()
       header_height = header_width * image_height / image_width
-      canvas.drawImage(header_image, 0.65 * inch, A4[1] - 0.55 * inch - header_height, width=header_width, height=header_height, preserveAspectRatio=True, anchor='n', mask='auto')
+      canvas.drawImage(header_image, 0.4 * inch, A4[1] - 0.25 * inch - header_height, width=header_width, height=header_height, preserveAspectRatio=True, anchor='n', mask='auto')
     else:
       canvas.setFont('Helvetica', 8)
       canvas.drawRightString(A4[0] - 0.9 * inch, A4[1] - 0.48 * inch, 'ECLMS | CONTRACT DOCUMENT')
+    if footer_image:
+      footer_width = A4[0] - 0.8 * inch
+      image_width, image_height = footer_image.getSize()
+      footer_height = footer_width * image_height / image_width
+      canvas.drawImage(footer_image, 0.4 * inch, 0.55 * inch, width=footer_width, height=footer_height, preserveAspectRatio=True, anchor='n', mask='auto')
     canvas.setFont('Helvetica', 8)
-    canvas.drawCentredString(A4[0] / 2, 0.42 * inch, f'Page {doc.page}')
+    canvas.drawCentredString(A4[0] / 2, 0.27 * inch, f'Page {doc.page}')
     canvas.restoreState()
 
-  header_margin = 0.55 * inch
+  header_margin = 0.25 * inch
   if header_image:
     image_width, image_height = header_image.getSize()
-    header_margin += (A4[0] - 1.3 * inch) * image_height / image_width + 0.25 * inch
-  doc = BaseDocTemplate(out, pagesize=A4, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=header_margin if header_image else 0.75 * inch, bottomMargin=0.65 * inch)
+    header_margin += (A4[0] - 0.8 * inch) * image_height / image_width + 0.15 * inch
+  footer_margin = 0.55 * inch
+  if footer_image:
+    image_width, image_height = footer_image.getSize()
+    footer_margin += (A4[0] - 0.8 * inch) * image_height / image_width + 0.1 * inch
+  doc = BaseDocTemplate(out, pagesize=A4, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=header_margin if header_image else 0.75 * inch, bottomMargin=footer_margin if footer_image else 0.65 * inch)
   doc.addPageTemplates([PageTemplate(id='contract', frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')], onPage=furniture)])
   story = [Paragraph(title, title_style), Paragraph(f'{reference} | {counterparty}', ParagraphStyle('Meta', parent=body, alignment=TA_CENTER, textColor=colors.HexColor('#64748B'))), Spacer(1, 14)]
   numbered, _, _ = numbered_structure(_structure(version))
