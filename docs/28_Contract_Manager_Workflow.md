@@ -6,7 +6,7 @@ This document is the implementation specification for the first user-facing cont
 
 ## Primary user
 
-The Contract Manager creates and manages contracts, selects reusable templates, completes missing commercial information, sends contracts for review, merges feedback, tracks approvals, and monitors guarantees. Administrators retain unrestricted configuration and administrative control.
+The Contract Manager creates and manages contracts, selects reusable templates, completes missing commercial information, sends contracts for review, merges feedback, tracks approvals, and monitors guarantees. Administrators retain unrestricted user, role, template, and system configuration control.
 
 ## First-release lifecycle
 
