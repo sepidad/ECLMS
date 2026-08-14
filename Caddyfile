@@ -16,7 +16,7 @@
 }
 
 # Local HTTP entrypoint. Replace with a real HTTPS hostname in production.
-http://eclms.localhost, http://localhost {
+http://eclms.localhost, http://localhost, http://127.0.0.1 {
 
   # Frontend static files when built into the image (optional).
   root * /srv

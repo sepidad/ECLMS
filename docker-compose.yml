@@ -101,6 +101,7 @@ services:
     container_name: eclms-compose-proxy
     ports:
       - '80:80'
+      - '8081:80'
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - eclms-caddy-data:/data
