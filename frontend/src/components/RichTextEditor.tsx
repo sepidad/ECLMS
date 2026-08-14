@@ -68,7 +68,7 @@ export default function RichTextEditor({ value, onChange, placeholder, minHeight
       <span style={{ borderLeft: '1px solid #cbd5e1', margin: '0 2px' }} />
       <button type="button" title="Bulleted list" onClick={() => command('insertUnorderedList')} style={button}><List size={13} /></button>
       <button type="button" title="Numbered list" onClick={() => command('insertOrderedList')} style={button}><ListOrdered size={13} /></button>
-      <button type="button" title="Insert table" onClick={insertTable} style={button}><Table2 size={13} /></button>
+      <button type="button" title="Insert table" onMouseDown={e => e.preventDefault()} onClick={insertTable} style={button}><Table2 size={13} /></button>
       <button type="button" title="Add image" onClick={() => fileInput.current?.click()} style={button}><ImagePlus size={13} /></button>
       <input ref={fileInput} type="file" accept="image/*" onChange={addImage} style={{ display: 'none' }} />
     </div>
