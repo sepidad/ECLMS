@@ -56,6 +56,10 @@ class FeedbackDecisionRequest(BaseModel):
   status: str = Field(pattern='^(ACCEPTED|REJECTED)$')
 
 
+class FeedbackMergeRequest(BaseModel):
+  new_content: str = Field(min_length=1, max_length=200000)
+
+
 def _service(request: Request) -> ContractService:
   return request.app.state.container.get_service('contracts.service')
 
@@ -164,6 +168,21 @@ async def decide_feedback(feedback_id: str, payload: FeedbackDecisionRequest, re
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
   return ok({'id': feedback_id, 'status': payload.status}, get_trace_id())
+
+
+@router.post('/{contract_id}/feedback/{feedback_id}/merge')
+async def merge_feedback(contract_id: str, feedback_id: str, payload: FeedbackMergeRequest, request: Request):
+  try:
+    actor = await require_permission(request, 'contract.update')
+    contract = await _review_service(request).merge(
+      contract_id=contract_id,
+      feedback_id=feedback_id,
+      new_content=payload.new_content,
+      organization_id=actor.organization_id,
+    )
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'id': contract.id, 'state': contract.state, 'version_id': contract.current_version_id}, get_trace_id())
 
 
 @router.patch('/{contract_id}')

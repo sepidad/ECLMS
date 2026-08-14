@@ -30,3 +30,18 @@ class ContractReviewService:
       raise ValueError('Decision must be ACCEPTED or REJECTED')
     if not await self._repository.decide(feedback_id, status):
       raise NotFoundError(f'Feedback not found: {feedback_id}')
+
+  async def merge(self, *, contract_id, feedback_id, new_content, organization_id):
+    feedback = await self._repository.get(feedback_id)
+    if feedback is None or feedback['contract_id'] != contract_id:
+      raise NotFoundError(f'Feedback not found: {feedback_id}')
+    if feedback['status'] != 'OPEN':
+      raise ValueError('Only open feedback can be merged')
+    contract = await self._contracts.get_contract(contract_id, organization_id=organization_id)
+    if feedback['version_id'] != contract.current_version_id:
+      raise ValueError('Feedback targets an outdated version')
+    updated = await self._contracts.update_contract(
+      contract_id, content=new_content, organization_id=organization_id,
+    )
+    await self._repository.decide(feedback_id, 'ACCEPTED')
+    return updated

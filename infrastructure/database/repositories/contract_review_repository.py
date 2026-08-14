@@ -8,6 +8,17 @@ from infrastructure.database.session import get_session_factory
 
 
 class SqlContractReviewRepository:
+  async def get(self, feedback_id: str) -> dict | None:
+    async with get_session_factory()() as session:
+      row = await session.get(ContractReviewFeedbackModel, feedback_id)
+      if row is None:
+        return None
+      return {
+        'id': row.id, 'contract_id': row.contract_id, 'version_id': row.version_id,
+        'status': row.status, 'kind': row.kind, 'body': row.body,
+        'proposed_text': row.proposed_text,
+      }
+
   async def save(self, item: ReviewFeedback) -> ReviewFeedback:
     async with get_session_factory()() as session:
       session.add(ContractReviewFeedbackModel(
