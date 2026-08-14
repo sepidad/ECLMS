@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import Any
 from html.parser import HTMLParser
 from base64 import b64decode
+import re
 
 from backend.modules.contracts.domain.structure import numbered_structure
 from backend.modules.contracts.domain.rich_text import rich_text_to_plain
@@ -109,7 +110,16 @@ def add_rich_docx_content(document, html: str) -> None:
       rows = payload
       if not rows: continue
       table = document.add_table(rows=len(rows), cols=max(len(row) for row in rows))
-      table.style = 'Table Grid'
+      try:
+        table.style = 'Table Grid'
+      except KeyError:
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn
+        tbl_pr = table._tbl.tblPr
+        borders = OxmlElement('w:tblBorders')
+        for edge in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
+          border = OxmlElement(f'w:{edge}'); border.set(qn('w:val'), 'single'); border.set(qn('w:sz'), '4'); border.set(qn('w:color'), 'B8C2CC'); borders.append(border)
+        tbl_pr.append(borders)
       for row_index, row in enumerate(rows):
         for cell_index, text in enumerate(row): table.cell(row_index, cell_index).text = text
       continue
@@ -192,7 +202,7 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   from reportlab.lib.pagesizes import A4
   from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
   from reportlab.lib.units import inch
-  from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, PageBreak, Spacer
+  from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, PageBreak, Spacer, Table, TableStyle
 
   header_image = None
   if template_bytes:
@@ -202,7 +212,15 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
         image_names = sorted(name for name in archive.namelist() if name.startswith('word/media/'))
         if image_names:
           from reportlab.lib.utils import ImageReader
-          header_image = ImageReader(BytesIO(archive.read(image_names[0])))
+          from PIL import Image
+          source = Image.open(BytesIO(archive.read(image_names[0]))).convert('RGB')
+          # The supplied letterhead asset is a full A4 page image. Its actual
+          # header occupies the top ~20%; the footer is intentionally omitted
+          # here because the PDF renderer supplies its own page footer.
+          crop_height = min(source.height, max(500, int(source.height * 0.21)))
+          cropped = source.crop((0, 0, source.width, crop_height))
+          cropped_bytes = BytesIO(); cropped.save(cropped_bytes, format='PNG'); cropped_bytes.seek(0)
+          header_image = ImageReader(cropped_bytes)
     except Exception:  # noqa: BLE001 - a malformed optional header must not block PDF export
       header_image = None
 
@@ -213,6 +231,41 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   article = ParagraphStyle('Article', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=13, leading=16, textColor=colors.HexColor('#1F4E79'), spaceBefore=10, spaceAfter=5)
   sub = ParagraphStyle('SubArticle', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=11, leading=14, textColor=colors.HexColor('#1F4E79'), spaceBefore=7, spaceAfter=4)
   note = ParagraphStyle('Note', parent=body, leftIndent=18, bulletIndent=7, textColor=colors.HexColor('#666666'))
+
+  class _PdfTableParser(HTMLParser):
+    def __init__(self) -> None:
+      super().__init__(convert_charrefs=True); self.rows: list[list[str]] = []; self.row: list[str] | None = None; self.cell: list[str] | None = None
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+      if tag == 'tr': self.row = []
+      elif tag in {'td', 'th'} and self.row is not None: self.cell = []
+    def handle_endtag(self, tag: str) -> None:
+      if tag in {'td', 'th'} and self.row is not None and self.cell is not None: self.row.append(''.join(self.cell).strip()); self.cell = None
+      elif tag == 'tr' and self.row is not None: self.rows.append(self.row); self.row = None
+    def handle_data(self, data: str) -> None:
+      if self.cell is not None: self.cell.append(data)
+
+  def pdf_content(html: str) -> list[Any]:
+    content: list[Any] = []
+    pattern = re.compile(r'<table\b[^>]*>(.*?)</table>', re.IGNORECASE | re.DOTALL)
+    cursor = 0
+    for match in pattern.finditer(html):
+      before = rich_text_to_plain(html[cursor:match.start()])
+      if before: content.append(Paragraph(before.replace('&', '&amp;'), body))
+      parser = _PdfTableParser(); parser.feed(match.group(1)); parser.close()
+      if parser.rows:
+        table = Table(parser.rows, repeatRows=1, hAlign='LEFT')
+        table.setStyle(TableStyle([
+          ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#94A3B8')),
+          ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E2E8F0')),
+          ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+          ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+          ('LEFTPADDING', (0, 0), (-1, -1), 6), ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+          ('TOPPADDING', (0, 0), (-1, -1), 5), ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+        ])); content.extend([table, Spacer(1, 8)])
+      cursor = match.end()
+    after = rich_text_to_plain(html[cursor:])
+    if after: content.append(Paragraph(after.replace('&', '&amp;'), body))
+    return content
 
   def furniture(canvas, doc):
     canvas.saveState(); canvas.setFillColor(colors.HexColor('#64748B'))
@@ -232,9 +285,7 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   def visit(nodes: list[dict[str, Any]], depth: int = 0):
     for node in nodes:
       story.append(Paragraph(f"Article {node['number']} - {node['title']}" if depth == 0 else f"{node['number']} {node['title']}", article if depth == 0 else sub))
-      for paragraph in str(node.get('body') or '').split('\n'):
-        plain = rich_text_to_plain(paragraph)
-        if plain.strip(): story.append(Paragraph(plain.replace('&', '&amp;'), body))
+      story.extend(pdf_content(str(node.get('body') or '')))
       for note_text in node.get('notes', []): story.append(Paragraph(rich_text_to_plain(note_text).replace('&', '&amp;'), note, bulletText='•'))
       visit(node.get('children', []), depth + 1)
   visit(numbered); doc.build(story); return out.getvalue()
