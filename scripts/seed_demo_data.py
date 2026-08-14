@@ -19,8 +19,8 @@ from infrastructure.database.models.contracts import ContractModel, ContractVers
 from infrastructure.database.models.guarantees import GuaranteeModel
 from infrastructure.database.models.identity import RoleModel, UserModel, UserRoleModel
 from infrastructure.database.models.user_permission_overrides import UserPermissionOverrideModel
-from infrastructure.database.session import get_session_factory, init_database
 from infrastructure.database.seed import seed_roles_permissions
+from infrastructure.database.session import get_session_factory, init_database
 
 
 async def main() -> None:
