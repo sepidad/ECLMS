@@ -100,16 +100,14 @@ services:
     image: eclms-open-proxy
     container_name: eclms-compose-proxy
     ports:
-      - '443:443'
       - '80:80'
-      - '443:443/udp'
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - eclms-caddy-data:/data
     depends_on:
       - api
     healthcheck:
-      test: ['CMD', 'wget', '-q', '--no-check-certificate', '-O', '/dev/null', 'https://localhost/api/v1/identity/roles']
+      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://localhost/api/v1/identity/roles']
       interval: 10s
       timeout: 5s
       retries: 5
