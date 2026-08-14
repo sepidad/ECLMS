@@ -179,10 +179,11 @@ async def user_permissions(user_id: str, request: Request):
     await require_permission(request, 'user.manage')
     service = _users(request)
     overrides = await service.user_permission_overrides(user_id)
+    effective = await service.effective_permissions(user_id)
     permissions = await service.list_permissions()
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
-  return ok({'user_id': user_id, 'overrides': sorted(overrides), 'all_permissions': permissions}, get_trace_id())
+  return ok({'user_id': user_id, 'overrides': sorted(overrides), 'effective': sorted(effective), 'all_permissions': permissions}, get_trace_id())
 
 
 @router.put('/users/{user_id}/permissions')

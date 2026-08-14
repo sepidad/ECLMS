@@ -17,8 +17,12 @@ export default function AdminCenterTab({ user, users, headers, onNavigate, onOpe
   const [role, setRole] = React.useState('CONTRACT_MANAGER');
   const [permissions, setPermissions] = React.useState<{ code: string; description: string; enabled: boolean }[]>([]);
   const [saving, setSaving] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState('');
+  const [userPermissions, setUserPermissions] = React.useState<{ code: string; description: string; enabled: boolean }[]>([]);
   React.useEffect(() => { fetch(`/api/v1/identity/roles/${role}/permissions`, { headers }).then(r => r.json()).then(d => { if (d.success) { const enabled = new Set(d.data.permissions); setPermissions((d.data.all_permissions || []).map((p: any) => ({ ...p, enabled: enabled.has(p.code) }))); } }); }, [role]);
   const savePermissions = async () => { setSaving(true); await fetch(`/api/v1/identity/roles/${role}/permissions`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ permissions: permissions.filter(p => p.enabled).map(p => p.code) }) }); setSaving(false); };
+  const loadUserPermissions = async (userId: string) => { setSelectedUser(userId); const response = await fetch(`/api/v1/identity/users/${userId}/permissions`, { headers }); const data = await response.json(); if (data.success) { const enabled = new Set(data.data.effective); setUserPermissions((data.data.all_permissions || []).map((p: any) => ({ ...p, enabled: enabled.has(p.code) }))); } };
+  const saveUserPermissions = async () => { if (!selectedUser) return; setSaving(true); await fetch(`/api/v1/identity/users/${selectedUser}/permissions`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ permissions: Object.fromEntries(userPermissions.map(p => [p.code, p.enabled])) }) }); setSaving(false); };
   return (
     <div>
       <section style={{ background: 'linear-gradient(135deg, #0f172a, #334155)', color: '#fff', borderRadius: '16px', padding: '26px 28px', marginBottom: '18px' }}>
@@ -42,6 +46,12 @@ export default function AdminCenterTab({ user, users, headers, onNavigate, onOpe
         <select value={role} onChange={e => setRole(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '12px' }}><option>CONTRACT_MANAGER</option><option>VIEWER</option></select>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>{permissions.map(permission => <label key={permission.code} style={{ display: 'flex', gap: '8px', alignItems: 'start', padding: '8px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}><input type="checkbox" checked={permission.enabled} onChange={e => setPermissions(permissions.map(p => p.code === permission.code ? { ...p, enabled: e.target.checked } : p))} /><span><strong>{permission.code}</strong><br /><span style={{ color: '#64748b' }}>{permission.description}</span></span></label>)}</div>
         <button onClick={savePermissions} disabled={saving} style={{ ...button, marginTop: '14px', background: '#4338ca', color: '#fff' }}>{saving ? 'Saving…' : 'Save permissions'}</button>
+      </section>
+      <section style={{ ...card, marginTop: '18px' }}>
+        <h3 style={{ margin: 0, fontSize: '15px' }}>Individual permission overrides</h3>
+        <p style={{ color: '#64748b', fontSize: '12px' }}>Use this for exceptions such as Manager 2. These settings override the person’s role defaults.</p>
+        <select value={selectedUser} onChange={e => loadUserPermissions(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '12px' }}><option value="">Select a person</option>{users.map(person => <option key={person.id} value={person.id}>{person.full_name} · {(person.roles || []).join(', ')}</option>)}</select>
+        {selectedUser && <><div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>{userPermissions.map(permission => <label key={permission.code} style={{ display: 'flex', gap: '8px', alignItems: 'start', padding: '8px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}><input type="checkbox" checked={permission.enabled} onChange={e => setUserPermissions(userPermissions.map(p => p.code === permission.code ? { ...p, enabled: e.target.checked } : p))} /><span><strong>{permission.code}</strong><br /><span style={{ color: '#64748b' }}>{permission.description}</span></span></label>)}</div><button onClick={saveUserPermissions} disabled={saving} style={{ ...button, marginTop: '14px', background: '#0f766e', color: '#fff' }}>{saving ? 'Saving…' : 'Save individual overrides'}</button></>}
       </section>
     </div>
   );

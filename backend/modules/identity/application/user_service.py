@@ -71,5 +71,8 @@ class UserService:
   async def user_permission_overrides(self, user_id: str) -> set[str]:
     return await self._repository.user_permission_overrides(user_id)
 
+  async def effective_permissions(self, user_id: str) -> set[str]:
+    return await self._repository.permissions_for_user(user_id)
+
   async def replace_user_permissions(self, user_id: str, permissions: dict[str, bool]) -> bool:
     return await self._repository.replace_user_permissions(user_id, permissions)
