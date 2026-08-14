@@ -12,6 +12,8 @@ import SystemHealthTab from './components/SystemHealthTab';
 import DataImportTab from './components/DataImportTab';
 import IntegrationsTab from './components/IntegrationsTab';
 import DashboardTab from './components/DashboardTab';
+import type { ContractNode } from './components/ContractStructureEditor';
+import ContractStructureEditor from './components/ContractStructureEditor';
 import GuaranteesTab from './components/GuaranteesTab';
 import ApprovalInbox from './components/ApprovalInbox';
 import AdminCenterTab from './components/AdminCenterTab';
@@ -86,6 +88,16 @@ interface Workflow {
   steps: WorkflowStep[];
 }
 
+const templateStructure = (key: string): ContractNode[] => {
+  const make = (title: string, body = ''): ContractNode => ({ id: `${key}-${title}`, title, body, children: [], notes: [] });
+  const common = [make('طرفین قرارداد'), make('موضوع قرارداد'), make('مدت و تاریخ‌های مهم'), make('مبلغ و نحوه پرداخت'), make('تعهدات طرفین'), make('تضمین‌ها، بیمه و کسورات'), make('تغییرات، تأخیر و خسارت'), make('فسخ، حل اختلاف و سایر مقررات')];
+  if (key === 'procurement') { common[1] = make('کالا، مشخصات فنی و مقدار'); common.splice(3, 0, make('تحویل، بازرسی و پذیرش')); }
+  if (key === 'construction') { common[1] = make('شرح کار و محدوده پروژه'); common.splice(2, 0, make('برنامه زمان‌بندی، BOQ و محل اجرا')); common.push(make('تست، تحویل موقت و قطعی')); }
+  if (key === 'consulting') { common[1] = make('خدمات و خروجی‌های قابل تحویل'); common.splice(4, 0, make('افراد کلیدی و میزان تلاش')); common.push(make('محرمانگی و مالکیت فکری')); }
+  if (key === 'maintenance-sla') { common[1] = make('خدمات و دارایی‌های تحت پوشش'); common.splice(2, 0, make('سطح خدمت، KPI و روش اندازه‌گیری')); common.push(make('گزارش‌دهی، رخدادها و اعتبار خدمات')); }
+  return common;
+};
+
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('eclms_token'));
   const [user, setUser] = useState<User | null>(null);
@@ -126,6 +138,7 @@ export default function App() {
   const [newRef, setNewRef] = useState('');
   const [newCounterparty, setNewCounterparty] = useState('');
   const [newContent, setNewContent] = useState('');
+  const [newStructure, setNewStructure] = useState<ContractNode[]>([]);
   const [newDefId, setNewDefId] = useState('contract-approval');
   
   const [newUsername, setNewUsername] = useState('');
@@ -441,7 +454,7 @@ export default function App() {
       const res = await fetch('/api/v1/contracts', {
         method: 'POST',
         headers,
-        body: JSON.stringify({ title: newTitle, reference_number: newRef, counterparty: newCounterparty, content: newContent || null })
+        body: JSON.stringify({ title: newTitle, reference_number: newRef, counterparty: newCounterparty, content: newContent || null, structure: newStructure.length ? newStructure : null })
       });
       const data = await res.json();
       if (data.success) {
@@ -449,6 +462,7 @@ export default function App() {
         setNewRef('');
         setNewCounterparty('');
         setNewContent('');
+        setNewStructure([]);
         fetchContracts();
       } else {
         alert(data.error?.message || 'Failed to create contract');
@@ -463,6 +477,7 @@ export default function App() {
     setNewRef(`${String(template.contract_type || 'CONTRACT').slice(0, 8)}-2026-001`);
     setNewCounterparty('');
     setNewContent(template.content_template || '');
+    setNewStructure(templateStructure(template.key));
     setSelectedContractId(null);
     setActiveTab('contracts');
   };
@@ -887,6 +902,7 @@ export default function App() {
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Contract content</label>
                     <textarea value={newContent} onChange={e => setNewContent(e.target.value)} rows={8} placeholder="Use a template above or enter the initial contract structure…" style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '12px', boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit' }} />
                   </div>
+                  {newStructure.length > 0 && <ContractStructureEditor value={newStructure} onChange={value => { setNewStructure(value); setNewContent(''); }} />}
                   <div>
                     <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Initial Workflow Blueprint</label>
                     <select value={newDefId} onChange={e => setNewDefId(e.target.value)} style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box', background: '#fff' }}>

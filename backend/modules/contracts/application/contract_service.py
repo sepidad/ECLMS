@@ -44,6 +44,7 @@ class ContractService:
     organization_id: str,
     owner_id: str,
     content: str | None = None,
+    structure: list[dict] | None = None,
   ) -> Contract:
     contract = Contract(
       title=title,
@@ -53,7 +54,7 @@ class ContractService:
       owner_id=owner_id,
     )
     await self._repository.save(contract)
-    await self._repository.create_version(contract, content=content)
+    await self._repository.create_version(contract, content=content, structure=structure)
     await self._event_bus.publish(
       Event(
         event_type='contract.created',
@@ -77,6 +78,7 @@ class ContractService:
     reference_number: str | None = None,
     counterparty: str | None = None,
     content: str | None = None,
+    structure: list[dict] | None = None,
   ) -> Contract:
     """Update mutable fields and snapshot a new immutable version."""
     contract = await self._require_scoped(contract_id, organization_id)
@@ -88,7 +90,7 @@ class ContractService:
       contract.counterparty = counterparty
     contract.updated_at = utc_now()
     await self._repository.save(contract)
-    await self._repository.create_version(contract, content=content)
+    await self._repository.create_version(contract, content=content, structure=structure)
     await self._event_bus.publish(
       Event(
         event_type='contract.updated',

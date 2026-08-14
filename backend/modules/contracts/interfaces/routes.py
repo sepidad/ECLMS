@@ -24,6 +24,7 @@ from backend.api.security import require_abac, require_permission
 from backend.core.exceptions import ECLMSError
 from backend.modules.contracts.application.contract_service import ContractService
 from backend.modules.contracts.domain.template import list_templates
+from backend.modules.contracts.domain.structure import normalize_structure, numbered_structure, render_structure
 
 router = APIRouter(tags=['contracts'])
 
@@ -33,6 +34,7 @@ class CreateContractRequest(BaseModel):
   reference_number: str = Field(min_length=1, max_length=64)
   counterparty: str = Field(min_length=1, max_length=200)
   content: str | None = Field(default=None, max_length=200_000)
+  structure: list[dict] | None = None
 
 
 class UpdateContractRequest(BaseModel):
@@ -40,6 +42,7 @@ class UpdateContractRequest(BaseModel):
   reference_number: str | None = Field(default=None, min_length=1, max_length=64)
   counterparty: str | None = Field(default=None, min_length=1, max_length=200)
   content: str | None = Field(default=None, max_length=200_000)
+  structure: list[dict] | None = None
 
 
 class TransitionRequest(BaseModel):
@@ -101,8 +104,13 @@ async def create_contract(payload: CreateContractRequest, request: Request):
   try:
     actor = await require_permission(request, 'contract.create')
     service = _service(request)
+    create = payload.model_dump(exclude_none=True)
+    if payload.structure is not None:
+      normalized = normalize_structure(payload.structure)
+      create['structure'] = normalized
+      create['content'] = render_structure(normalized)
     contract = await service.create_contract(
-      **payload.model_dump(),
+      **create,
       organization_id=actor.organization_id,
       owner_id=actor.id,
     )
@@ -238,9 +246,15 @@ async def update_contract(contract_id: str, payload: UpdateContractRequest, requ
   try:
     actor = await require_permission(request, 'contract.update')
     service = _service(request)
+    update = payload.model_dump(exclude_none=True)
+    if payload.structure is not None:
+      normalized = normalize_structure(payload.structure)
+      _, _, _ = numbered_structure(normalized)
+      update['structure'] = normalized
+      update['content'] = render_structure(normalized)
     contract = await service.update_contract(
       contract_id,
-      **payload.model_dump(exclude_none=True),
+      **update,
       organization_id=actor.organization_id,
     )
   except ECLMSError as exc:

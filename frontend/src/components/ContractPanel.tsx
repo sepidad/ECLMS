@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowLeft, Save, History, Upload, FileText, AlertTriangle, FileSearch, CheckCircle2, AlertCircle, ShieldAlert, Download } from 'lucide-react';
 import { downloadAuthenticated } from '../download';
+import ContractStructureEditor from './ContractStructureEditor';
+import type { ContractNode } from './ContractStructureEditor';
 
 interface Props {
   contractId: string;
@@ -19,7 +21,7 @@ interface ContractDetail {
   organization_id: string;
 }
 
-interface Version { id: string; version_number: number; title: string; counterparty: string; content: string | null; is_active: boolean; created_at: string; }
+interface Version { id: string; version_number: number; title: string; counterparty: string; content: string | null; structure?: ContractNode[] | null; is_active: boolean; created_at: string; }
 interface DocumentItem { id: string; contract_id: string; doc_type: string; title: string; created_at: string; version_count?: number; }
 interface WorkflowSummary { id: string; contract_id: string; status: string; current_step?: string; current_step_role?: string; steps: { name: string; status: string; assigned_role: string }[]; }
 interface Feedback { id: string; version_id: string; reviewer_id: string; reviewer_role: string; kind: string; body: string; proposed_text?: string; status: string; created_at: string; }
@@ -58,6 +60,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
   const [ref, setRef] = useState('');
   const [counterparty, setCounterparty] = useState('');
   const [content, setContent] = useState('');
+  const [structure, setStructure] = useState<ContractNode[]>([]);
 
   const [newState, setNewState] = useState('APPROVED');
   const [review, setReview] = useState<any>(null);
@@ -138,6 +141,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
     setCounterparty(detail.counterparty);
     const active = versions.find(v => v.is_active);
     setContent(active?.content || '');
+    setStructure(active?.structure || (active?.content ? [{ id: `legacy-${Date.now()}`, title: 'متن قرارداد', body: active.content, children: [], notes: [] }] : []));
     setEditing(true);
   };
 
@@ -145,8 +149,8 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
     e.preventDefault();
     setError(''); setMsg('');
     try {
-      const payload: any = { title, reference_number: ref, counterparty };
-      if (content) payload.content = content;
+      const payload: any = { title, reference_number: ref, counterparty, structure };
+      if (!structure.length && content) payload.content = content;
       await api(`/api/v1/contracts/${contractId}`, {
         method: 'PATCH',
         headers: { ...headers, 'Content-Type': 'application/json' },
@@ -290,10 +294,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
                 <label style={label()}>Counterparty</label>
                 <input value={counterparty} onChange={e => setCounterparty(e.target.value)} required style={input()} />
               </div>
-              <div>
-                <label style={label()}>Version Content</label>
-                <textarea value={content} onChange={e => setContent(e.target.value)} rows={6} placeholder="Paste contract text for analysis…" style={{ ...input(), resize: 'vertical', fontFamily: 'monospace', fontSize: '12px' }} />
-              </div>
+              <ContractStructureEditor value={structure} onChange={setStructure} />
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button type="submit" style={btn('primary')}>Save (new version)</button>
                 <button type="button" onClick={() => setEditing(false)} style={btn('ghost')}>Cancel</button>

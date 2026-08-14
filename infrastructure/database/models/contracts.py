@@ -45,6 +45,7 @@ class ContractVersionModel(Base):
   title: Mapped[str] = mapped_column(String(300), nullable=False)
   counterparty: Mapped[str] = mapped_column(String(200), nullable=False)
   content: Mapped[str | None] = mapped_column(Text, nullable=True)
+  structure_json: Mapped[str | None] = mapped_column(Text, nullable=True)
   is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
   created_by: Mapped[str] = mapped_column(String(32), nullable=False)
   created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

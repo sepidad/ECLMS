@@ -8,11 +8,14 @@ contract so the version snapshot is atomic with the save.
 
 from __future__ import annotations
 
+import json
+
 from sqlalchemy import select
 
 from backend.core.exceptions import NotFoundError
 from backend.core.utils import new_id
 from backend.modules.contracts.domain.contract import Contract
+from backend.modules.contracts.domain.structure import numbered_structure
 from infrastructure.database.models.contracts import ContractModel, ContractVersionModel
 from infrastructure.database.session import get_session_factory
 
@@ -100,7 +103,7 @@ class SqlContractRepository:
       rows = await session.execute(stmt)
       return len(rows.scalars().all())
 
-  async def create_version(self, contract: Contract, content: str | None = None) -> int:
+  async def create_version(self, contract: Contract, content: str | None = None, structure: list[dict] | None = None) -> int:
     """Create the next immutable version snapshot and mark it active.
 
     Written in the same transaction as the parent contract save.
@@ -126,6 +129,7 @@ class SqlContractRepository:
           title=contract.title,
           counterparty=contract.counterparty,
           content=content,
+          structure_json=json.dumps(structure, ensure_ascii=False) if structure is not None else None,
           is_active=True,
           created_by=contract.owner_id,
           created_at=contract.updated_at,
@@ -148,15 +152,21 @@ class SqlContractRepository:
         .order_by(ContractVersionModel.version_number)
       )
       models = (await session.execute(stmt)).scalars().all()
-      return [
+      result = [
         {
           'id': v.id,
           'version_number': v.version_number,
           'title': v.title,
           'counterparty': v.counterparty,
           'content': v.content,
+          'structure': json.loads(v.structure_json) if v.structure_json else None,
           'is_active': v.is_active,
           'created_at': v.created_at,
         }
         for v in models
       ]
+      for item in result:
+        _, articles, notes = numbered_structure(item['structure'])
+        item['article_count'] = articles
+        item['note_count'] = notes
+      return result
