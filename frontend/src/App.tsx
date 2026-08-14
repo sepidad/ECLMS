@@ -90,11 +90,11 @@ interface Workflow {
 
 const templateStructure = (key: string): ContractNode[] => {
   const make = (title: string, body = ''): ContractNode => ({ id: `${key}-${title}`, title, body, children: [], notes: [] });
-  const common = [make('طرفین قرارداد'), make('موضوع قرارداد'), make('مدت و تاریخ‌های مهم'), make('مبلغ و نحوه پرداخت'), make('تعهدات طرفین'), make('تضمین‌ها، بیمه و کسورات'), make('تغییرات، تأخیر و خسارت'), make('فسخ، حل اختلاف و سایر مقررات')];
-  if (key === 'procurement') { common[1] = make('کالا، مشخصات فنی و مقدار'); common.splice(3, 0, make('تحویل، بازرسی و پذیرش')); }
-  if (key === 'construction') { common[1] = make('شرح کار و محدوده پروژه'); common.splice(2, 0, make('برنامه زمان‌بندی، BOQ و محل اجرا')); common.push(make('تست، تحویل موقت و قطعی')); }
-  if (key === 'consulting') { common[1] = make('خدمات و خروجی‌های قابل تحویل'); common.splice(4, 0, make('افراد کلیدی و میزان تلاش')); common.push(make('محرمانگی و مالکیت فکری')); }
-  if (key === 'maintenance-sla') { common[1] = make('خدمات و دارایی‌های تحت پوشش'); common.splice(2, 0, make('سطح خدمت، KPI و روش اندازه‌گیری')); common.push(make('گزارش‌دهی، رخدادها و اعتبار خدمات')); }
+  const common = [make('Parties'), make('Contract subject'), make('Term and key dates'), make('Price and payment'), make('Parties obligations'), make('Guarantees, insurance, and deductions'), make('Changes, delay, and damages'), make('Termination, disputes, and general provisions')];
+  if (key === 'procurement') { common[1] = make('Goods, technical specifications, and quantity'); common.splice(3, 0, make('Delivery, inspection, and acceptance')); }
+  if (key === 'construction') { common[1] = make('Work scope and project boundaries'); common.splice(2, 0, make('Schedule, BOQ, and site')); common.push(make('Testing, provisional acceptance, and final acceptance')); }
+  if (key === 'consulting') { common[1] = make('Services and deliverables'); common.splice(4, 0, make('Key personnel and level of effort')); common.push(make('Confidentiality and intellectual property')); }
+  if (key === 'maintenance-sla') { common[1] = make('Services and covered assets'); common.splice(2, 0, make('Service levels, KPIs, and measurement')); common.push(make('Reporting, incidents, and service credits')); }
   return common;
 };
 

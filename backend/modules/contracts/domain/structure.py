@@ -1,4 +1,4 @@
-"""Structured contract articles, sub-articles, and تبصره notes.
+"""Structured contract articles, sub-articles, and notes.
 
 Numbers are deliberately derived from list order.  Stored nodes never carry a
 hard-coded article number, so inserting a node automatically renumbers the
@@ -34,7 +34,7 @@ def _renumber(nodes: list[dict[str, Any]], prefix: str = '') -> tuple[list[dict[
     number = f'{prefix}-{index}' if prefix else str(index)
     children, child_articles, child_notes = _renumber(node['children'], number)
     item = {**node, 'number': number, 'children': children}
-    item['notes'] = [f'تبصره {n}: {text}' for n, text in enumerate(node['notes'], start=1)]
+    item['notes'] = [f'Note {n}: {text}' for n, text in enumerate(node['notes'], start=1)]
     result.append(item)
     articles += 1 + child_articles
     notes += len(node['notes']) + child_notes
@@ -51,7 +51,7 @@ def render_structure(value: Any) -> str:
 
   def visit(nodes: list[dict[str, Any]], depth: int = 0) -> None:
     for node in nodes:
-      lines.append(f"ماده {node['number']} - {node['title']}" if depth == 0 else f"{node['number']} {node['title']}")
+      lines.append(f"Article {node['number']} - {node['title']}" if depth == 0 else f"{node['number']} {node['title']}")
       if node['body']:
         lines.append(node['body'])
       lines.extend(node['notes'])
@@ -59,4 +59,3 @@ def render_structure(value: Any) -> str:
 
   visit(numbered)
   return '\n\n'.join(lines)
-
