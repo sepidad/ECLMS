@@ -32,6 +32,7 @@ from infrastructure.database.models.notifications import (
   WebhookSubscriptionModel,
 )
 from infrastructure.database.models.obligations import ObligationModel
+from infrastructure.database.models.user_permission_overrides import UserPermissionOverrideModel
 from infrastructure.database.models.workflow import (
   WorkflowHistoryModel,
   WorkflowInstanceModel,
@@ -58,6 +59,7 @@ __all__ = [
   'RolePermissionModel',
   'SmsDeliveryModel',
   'UserModel',
+  'UserPermissionOverrideModel',
   'UserRoleModel',
   'WebhookDeliveryModel',
   'WebhookSubscriptionModel',

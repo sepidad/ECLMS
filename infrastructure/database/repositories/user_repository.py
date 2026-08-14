@@ -18,6 +18,7 @@ from infrastructure.database.models.identity import (
   UserModel,
   UserRoleModel,
 )
+from infrastructure.database.models.user_permission_overrides import UserPermissionOverrideModel
 from infrastructure.database.session import get_session_factory
 
 
@@ -168,4 +169,28 @@ class SqlUserRepository:
       model = (await session.execute(stmt)).scalar_one_or_none()
       if model is None:
         return set()
-      return {permission.code for role in model.roles for permission in role.permissions}
+      permissions = {permission.code for role in model.roles for permission in role.permissions}
+      overrides = (await session.execute(select(UserPermissionOverrideModel).where(UserPermissionOverrideModel.user_id == user_id))).scalars().all()
+      for override in overrides:
+        if override.enabled:
+          permissions.add(override.permission_id)
+        else:
+          permissions.discard(override.permission_id)
+      return permissions
+
+  async def user_permission_overrides(self, user_id: str) -> set[str]:
+    async with get_session_factory()() as session:
+      rows = (await session.execute(select(UserPermissionOverrideModel).where(UserPermissionOverrideModel.user_id == user_id, UserPermissionOverrideModel.enabled.is_(True)))).scalars().all()
+      return {row.permission_id for row in rows}
+
+  async def replace_user_permissions(self, user_id: str, permissions: dict[str, bool]) -> bool:
+    async with get_session_factory()() as session:
+      if await session.get(UserModel, user_id) is None:
+        return False
+      await session.execute(UserPermissionOverrideModel.__table__.delete().where(UserPermissionOverrideModel.user_id == user_id))
+      valid = {row.id for row in (await session.execute(select(PermissionModel))).scalars().all()}
+      for permission, enabled in permissions.items():
+        if permission in valid:
+          session.add(UserPermissionOverrideModel(user_id=user_id, permission_id=permission, enabled=enabled))
+      await session.commit()
+      return True

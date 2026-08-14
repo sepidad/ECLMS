@@ -51,6 +51,10 @@ class RolePermissionsRequest(BaseModel):
   permissions: list[str]
 
 
+class UserPermissionsRequest(BaseModel):
+  permissions: dict[str, bool]
+
+
 def _auth(request: Request) -> AuthService:
   return request.app.state.container.get_service('identity.auth')
 
@@ -167,3 +171,26 @@ async def replace_role_permissions(role_name: str, payload: RolePermissionsReque
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
   return ok({'role': role_name, 'permissions': sorted(set(payload.permissions))}, get_trace_id())
+
+
+@router.get('/users/{user_id}/permissions')
+async def user_permissions(user_id: str, request: Request):
+  try:
+    await require_permission(request, 'user.manage')
+    service = _users(request)
+    overrides = await service.user_permission_overrides(user_id)
+    permissions = await service.list_permissions()
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'user_id': user_id, 'overrides': sorted(overrides), 'all_permissions': permissions}, get_trace_id())
+
+
+@router.put('/users/{user_id}/permissions')
+async def replace_user_permissions(user_id: str, payload: UserPermissionsRequest, request: Request):
+  try:
+    await require_permission(request, 'user.manage')
+    if not await _users(request).replace_user_permissions(user_id, payload.permissions):
+      return err('NOT_FOUND', f'User not found: {user_id}', get_trace_id())
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'user_id': user_id, 'overrides': payload.permissions}, get_trace_id())
