@@ -94,7 +94,10 @@ services:
       retries: 10
 
   proxy:
-    image: caddy:2-alpine
+    build:
+      context: ./frontend
+      dockerfile: ../deploy/proxy/Dockerfile
+    image: eclms-open-proxy
     container_name: eclms-compose-proxy
     ports:
       - '443:443'
