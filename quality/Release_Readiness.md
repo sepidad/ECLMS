@@ -6,17 +6,17 @@ This gate operationalizes the Project Constitution principles of documentation b
 
 ## Gate A — Repository integrity
 
-- [ ] All implementation files are reviewed and committed in coherent changes.
-- [ ] No runtime contract files, local databases, secrets, build output, or generated artifacts are tracked.
-- [ ] `git diff --check` is clean.
-- [ ] The release branch has a reproducible checkout from a clean worktree.
+- [x] The implementation is committed in a clean `main` baseline (`79de4a2`).
+- [x] No runtime contract files, local databases, secrets, build output, or generated artifacts are tracked.
+- [ ] `git diff --check` is clean after the current hardening change is committed.
+- [x] The pushed repository was cloned into a fresh checkout and matched commit `79de4a2` with a clean status.
 
 ## Gate B — Automated verification
 
-- [ ] Backend Ruff passes.
-- [ ] Full pytest suite passes from a clean environment.
-- [ ] Frontend TypeScript build passes.
-- [ ] Frontend lint has no actionable warnings.
+- [x] Backend Ruff passes.
+- [x] Full pytest suite passes from a clean checkout: 197 tests passed.
+- [x] Frontend TypeScript build passes from the clean checkout.
+- [x] Frontend lint has no actionable warnings.
 - [ ] Alembic upgrade reaches one head on a fresh PostgreSQL database.
 - [ ] Database downgrade/re-upgrade behavior is verified for the release migration range.
 
@@ -43,4 +43,4 @@ The release is **not ready** while any Gate A or Gate B item is open. Gate C and
 
 ## Current baseline
 
-As of 2026-08-14, the project has broad feature coverage, 197 passing backend tests, clean Ruff/frontend lint, and a passing frontend build. It remains in hardening state because the implementation is largely uncommitted and enterprise connectors are still scaffolds/dry-runs.
+As of 2026-08-14, the project has a clean pushed baseline, a reproducible clean checkout, 197 passing backend tests, clean Ruff/frontend lint, and a passing frontend build. Docker Compose static validation passes. Runtime Compose health validation remains open because the first build attempt exposed temporary validation artifacts in the Docker context; the ignore rules are now being hardened before retrying. Enterprise connectors remain scaffolds/dry-runs.

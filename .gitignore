@@ -22,6 +22,7 @@ dist/
 # Testing
 .pytest_cache/
 .pytest-temp/
+.release-validation/
 .coverage
 htmlcov/
 
