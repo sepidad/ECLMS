@@ -12,6 +12,7 @@ from infrastructure.database.models.documents_audit import (
   DocumentVersionModel,
 )
 from infrastructure.database.models.finances import FinanceCommitmentModel, FinancePaymentModel
+from infrastructure.database.models.guarantees import GuaranteeModel
 from infrastructure.database.models.identity import (
   OrganizationModel,
   PermissionModel,
@@ -48,6 +49,7 @@ __all__ = [
   'EmailDeliveryModel',
   'FinanceCommitmentModel',
   'FinancePaymentModel',
+  'GuaranteeModel',
   'NotificationModel',
   'ObligationModel',
   'OrganizationModel',

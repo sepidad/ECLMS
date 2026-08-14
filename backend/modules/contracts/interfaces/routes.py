@@ -13,6 +13,8 @@ Authorization is enforced by the shared RBAC guards.
 
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Request
 from pydantic import BaseModel, Field
 
@@ -60,12 +62,28 @@ class FeedbackMergeRequest(BaseModel):
   new_content: str = Field(min_length=1, max_length=200000)
 
 
+class GuaranteeRequest(BaseModel):
+  guarantee_type: str
+  direction: str
+  amount: float = Field(gt=0)
+  currency: str = Field(min_length=1, max_length=8)
+  issuer: str = Field(min_length=1, max_length=200)
+  beneficiary: str = Field(min_length=1, max_length=200)
+  serial_number: str = Field(min_length=1, max_length=100)
+  valid_from: date
+  expires_on: date
+
+
 def _service(request: Request) -> ContractService:
   return request.app.state.container.get_service('contracts.service')
 
 
 def _review_service(request: Request):
   return request.app.state.container.get_service('contracts.review.service')
+
+
+def _guarantee_service(request: Request):
+  return request.app.state.container.get_service('contracts.guarantee.service')
 
 
 @router.get('/templates')
@@ -145,6 +163,36 @@ async def list_feedback(contract_id: str, request: Request):
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
   return ok({'items': items}, get_trace_id())
+
+
+@router.get('/guarantees/warnings')
+async def guarantee_warnings(request: Request, days: int = 30):
+  try:
+    actor = await require_permission(request, 'contract.read')
+    items = await _guarantee_service(request).warnings(actor.organization_id, max(1, min(days, 365)))
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'items': items}, get_trace_id())
+
+
+@router.get('/{contract_id}/guarantees')
+async def list_guarantees(contract_id: str, request: Request):
+  try:
+    actor = await require_permission(request, 'contract.read')
+    items = await _guarantee_service(request).list(contract_id, actor.organization_id)
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'items': items}, get_trace_id())
+
+
+@router.post('/{contract_id}/guarantees')
+async def create_guarantee(contract_id: str, payload: GuaranteeRequest, request: Request):
+  try:
+    actor = await require_permission(request, 'contract.update')
+    item = await _guarantee_service(request).create(contract_id=contract_id, organization_id=actor.organization_id, **payload.model_dump())
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'id': item.id, 'state': item.state}, get_trace_id())
 
 
 @router.post('/{contract_id}/feedback')
