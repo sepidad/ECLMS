@@ -489,5 +489,11 @@ Current blockers for release readiness:
 Next focus:
 
 - Review and consolidate the working tree into a release branch/commit sequence.
+
+### Phase 6 — Contract Manager Workflow (specified)
+
+- Added `docs/28_Contract_Manager_Workflow.md` as the implementation specification derived from the contract workflow design document.
+- The first user journey is now explicitly manager-led: template → structured draft → parallel legal/finance review → manager merge → value/risk approval → execution → guarantee monitoring.
+- Implementation has not yet been declared complete; the next coding slice is template-backed contract preparation.
 - Complete clean-checkout and deployment acceptance tests.
 - Select one real enterprise connector and define the digital-signature scope through a recorded decision.

@@ -21,6 +21,7 @@ from backend.api.responses import err, ok
 from backend.api.security import require_abac, require_permission
 from backend.core.exceptions import ECLMSError
 from backend.modules.contracts.application.contract_service import ContractService
+from backend.modules.contracts.domain.template import list_templates
 
 router = APIRouter(tags=['contracts'])
 
@@ -45,6 +46,16 @@ class TransitionRequest(BaseModel):
 
 def _service(request: Request) -> ContractService:
   return request.app.state.container.get_service('contracts.service')
+
+
+@router.get('/templates')
+async def get_contract_templates(request: Request):
+  """Return the approved Phase 6 template library for contract preparation."""
+  try:
+    await require_permission(request, 'contract.read')
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'items': list_templates()}, get_trace_id())
 
 
 @router.post('')
