@@ -235,9 +235,19 @@ export default function App() {
 
   const fetchNotifications = async () => {
     try {
-      const res = await fetch('/api/v1/notifications', { headers });
+      const [res, warningRes] = await Promise.all([
+        fetch('/api/v1/notifications', { headers }),
+        fetch('/api/v1/contracts/guarantees/warnings?days=30', { headers }),
+      ]);
       const data = await res.json();
-      if (data.success) setNotifications(data.data.items || []);
+      const warningData = await warningRes.json();
+      const guaranteeNotifications = warningData.success ? (warningData.data.items || []).map((item: any) => ({
+        id: `guarantee-${item.id}`,
+        subject: item.warning === 'RELEASE_OVERDUE' ? 'Guarantee release overdue' : 'Guarantee expiry warning',
+        body: `${item.guarantee_type} guarantee ${item.serial_number} requires attention before ${item.expires_on}.`,
+        channel: 'in_app', is_read: false, created_at: item.created_at,
+      })) : [];
+      if (data.success) setNotifications([...guaranteeNotifications, ...(data.data.items || [])]);
     } catch (e) {
       console.error(e);
     }
