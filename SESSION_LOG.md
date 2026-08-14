@@ -587,3 +587,31 @@ The next state is **Phase 5 — Release Hardening**. Feature expansion is paused
 - Choose and implement one production-grade ERP/accounting connector; record the digital-signature decision.
 
 ---
+## Session 2026-08-14 — Clean Checkout and Deployment Validation
+
+Completed the next Phase 5 release-hardening slice against the pushed `main` repository.
+
+### Evidence
+
+- Fresh clone from `https://github.com/sepidad/ECLMS.git` matched commit `79de4a2` and had a clean worktree.
+- Frontend dependencies installed; lint and production build passed from the clean clone.
+- Backend suite passed from the clean clone: **197 passed**.
+- `docker compose config` and production overlay configuration both passed.
+- Built the API image successfully after excluding nested validation/test caches from Docker context.
+- Started the Compose stack successfully; API, PostgreSQL, Redis, Keycloak, and Caddy reported healthy.
+- Direct API `/health` and `/metrics` returned HTTP 200.
+- Caddy `https://localhost/health` returned HTTP 200 with `Strict-Transport-Security`; the IP form `https://127.0.0.1` is not the configured local TLS hostname.
+
+### Hardening change
+
+- Updated `.dockerignore` and `.gitignore` for nested pytest/Ruff caches and the temporary `.release-validation` directory.
+- Committed and pushed as `eb79ea8` (`chore: harden release validation contexts`).
+
+### Remaining Next Focus
+
+- Perform a backup/restore drill.
+- Verify real external-provider acceptance paths.
+- Select and implement one production-grade ERP/accounting connector.
+- Record the digital-signature scope decision.
+
+---

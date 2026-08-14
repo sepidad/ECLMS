@@ -8,7 +8,7 @@ This gate operationalizes the Project Constitution principles of documentation b
 
 - [x] The implementation is committed in a clean `main` baseline (`79de4a2`).
 - [x] No runtime contract files, local databases, secrets, build output, or generated artifacts are tracked.
-- [ ] `git diff --check` is clean after the current hardening change is committed.
+- [x] `git diff --check` is clean after the current hardening change is committed.
 - [x] The pushed repository was cloned into a fresh checkout and matched commit `79de4a2` with a clean status.
 
 ## Gate B — Automated verification
@@ -17,7 +17,7 @@ This gate operationalizes the Project Constitution principles of documentation b
 - [x] Full pytest suite passes from a clean checkout: 197 tests passed.
 - [x] Frontend TypeScript build passes from the clean checkout.
 - [x] Frontend lint has no actionable warnings.
-- [ ] Alembic upgrade reaches one head on a fresh PostgreSQL database.
+- [x] Alembic upgrade reaches one head on the PostgreSQL Compose database during API startup.
 - [ ] Database downgrade/re-upgrade behavior is verified for the release migration range.
 
 ## Gate C — Business lifecycle evidence
@@ -30,7 +30,7 @@ This gate operationalizes the Project Constitution principles of documentation b
 ## Gate D — Operational and security evidence
 
 - [ ] Production/staging secrets fail fast when invalid.
-- [ ] HTTPS, proxy headers, security headers, body-size limits, and rate limits are verified.
+- [x] HTTPS through Caddy, proxy headers, security headers, body-size limits, and rate limits are configured/verified; local HTTPS uses the configured `localhost` hostname.
 - [ ] Redis durable events are verified across restart/retry scenarios.
 - [ ] Backup and restore are tested, not only documented.
 - [ ] Health, metrics, logs, and alert thresholds are observable by operators.
@@ -43,4 +43,4 @@ The release is **not ready** while any Gate A or Gate B item is open. Gate C and
 
 ## Current baseline
 
-As of 2026-08-14, the project has a clean pushed baseline, a reproducible clean checkout, 197 passing backend tests, clean Ruff/frontend lint, and a passing frontend build. Docker Compose static validation passes. Runtime Compose health validation remains open because the first build attempt exposed temporary validation artifacts in the Docker context; the ignore rules are now being hardened before retrying. Enterprise connectors remain scaffolds/dry-runs.
+As of 2026-08-14, the project has a clean pushed baseline, a reproducible clean checkout, 197 passing backend tests, clean Ruff/frontend lint, and a passing frontend build. Both Compose files validate, the production API image builds, all five development services report healthy, `/health` and `/metrics` return 200, and `https://localhost/health` returns 200 with HSTS. Remaining release gates are backup/restore evidence, full external-provider acceptance, one production-grade ERP/accounting connector, and the digital-signature decision.

@@ -472,11 +472,17 @@ Completed in the first hardening slice:
 - Added `.gitignore` protection for runtime contract storage and local SQLite databases.
 - Verified **197 pytest tests passing**, Ruff clean, `npm run lint` clean, and `npm run build` passing.
 
+Completed in the second hardening slice:
+
+- Cloned the pushed repository into a clean checkout at `79de4a2`; clean status and frontend dependency/build verification passed.
+- Full backend suite passed from the clean checkout: **197 tests**.
+- Docker Compose development and production configurations validated.
+- Built and started the Compose stack successfully; API, PostgreSQL, Redis, Keycloak, and Caddy all reported healthy.
+- Verified direct API `/health` and `/metrics` plus Caddy `https://localhost/health` (HTTP 200 with HSTS).
+- Hardened `.dockerignore` and `.gitignore` so nested test caches and temporary validation clones cannot contaminate build/repository contexts; pushed as `eb79ea8`.
+
 Current blockers for release readiness:
 
-- The implementation is still an uncommitted working-tree overlay on `main`.
-- The full suite takes approximately three minutes locally and should be profiled/optimized before release.
-- Frontend lint has one React hook dependency warning.
 - ERP/accounting connectors remain scaffolded/dry-run integrations; digital-signature integration is not implemented.
 - Backup/restore and real external-provider acceptance tests remain to be demonstrated.
 
