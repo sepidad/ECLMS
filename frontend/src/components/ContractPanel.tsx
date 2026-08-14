@@ -3,6 +3,7 @@ import { ArrowLeft, Save, History, Upload, FileText, AlertTriangle, FileSearch, 
 import { downloadAuthenticated } from '../download';
 import ContractStructureEditor from './ContractStructureEditor';
 import type { ContractNode } from './ContractStructureEditor';
+import { sanitizeRichHtml } from './richTextUtils';
 
 interface Props {
   contractId: string;
@@ -284,7 +285,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
             <button onClick={() => exportContract('pdf')} disabled={!!exporting} style={btn('outline')}>{exporting === 'pdf' ? 'Exporting…' : 'Export PDF'}</button>
           </div>
         </div>
-        <pre style={{ margin: 0, maxHeight: '320px', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', lineHeight: 1.55, color: '#334155', background: '#fff', border: '1px solid #e9d5ff', borderRadius: '7px', padding: '14px' }}>{activeVersion?.content || 'This contract has no document content yet. Click “Edit / add content” to create the first official version.'}</pre>
+        {activeVersion?.content ? <div style={{ maxHeight: '320px', overflow: 'auto', fontSize: '13px', lineHeight: 1.55, color: '#334155', background: '#fff', border: '1px solid #e9d5ff', borderRadius: '7px', padding: '14px' }} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(activeVersion.content) }} /> : <div style={{ color: '#64748b', background: '#fff', border: '1px solid #e9d5ff', borderRadius: '7px', padding: '14px' }}>This contract has no document content yet. Click “Edit / add content” to create the first official version.</div>}
         {pdfPreviewUrl && <div style={{ marginTop: '14px', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#f8fafc' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderBottom: '1px solid #e2e8f0' }}><strong style={{ fontSize: '12px' }}>PDF preview</strong><button type="button" onClick={() => { URL.revokeObjectURL(pdfPreviewUrl); setPdfPreviewUrl(''); }} style={{ ...btn('ghost'), padding: '4px 7px' }}><X size={14} /> Close</button></div><iframe title="Contract PDF preview" src={pdfPreviewUrl} style={{ width: '100%', height: '620px', border: 0 }} /></div>}
       </section>
 

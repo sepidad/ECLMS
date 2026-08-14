@@ -8,13 +8,14 @@ following siblings when the version is rendered.
 from __future__ import annotations
 
 from typing import Any
+from backend.modules.contracts.domain.rich_text import sanitize_rich_text
 
 
 def _node(node: dict[str, Any]) -> dict[str, Any]:
   return {
     'id': str(node.get('id') or ''),
     'title': str(node.get('title') or '').strip(),
-    'body': str(node.get('body') or '').strip(),
+    'body': sanitize_rich_text(str(node.get('body') or '').strip()),
     'children': [_node(child) for child in (node.get('children') or []) if isinstance(child, dict)],
     'notes': [str(note).strip() for note in (node.get('notes') or []) if str(note).strip()],
   }

@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from io import BytesIO
 from typing import Any
+from html.parser import HTMLParser
+from base64 import b64decode
 
 from backend.modules.contracts.domain.structure import numbered_structure
+from backend.modules.contracts.domain.rich_text import rich_text_to_plain
 
 
 STYLE_PROFILE = {
@@ -39,6 +42,90 @@ def _add_page_field(paragraph) -> None:
   instr = OxmlElement('w:instrText'); instr.set(qn('xml:space'), 'preserve'); instr.text = ' PAGE '
   end = OxmlElement('w:fldChar'); end.set(qn('w:fldCharType'), 'end')
   run._r.extend([begin, instr, end])
+
+
+class _DocxRichParser(HTMLParser):
+  """Parse the editor's small HTML subset into paragraphs and tables."""
+  def __init__(self) -> None:
+    super().__init__(convert_charrefs=True)
+    self.blocks: list[tuple[str, Any]] = []
+    self.tokens: list[tuple[str, str, dict[str, str]]] = []
+    self.stack: list[str] = []
+    self.block_style: dict[str, str] = {}
+    self.list_kind: str | None = None
+    self.table: list[list[str]] | None = None
+    self.row: list[str] | None = None
+    self.cell: list[str] | None = None
+
+  def _flush(self) -> None:
+    if self.tokens:
+      self.blocks.append(('paragraph', (self.tokens, self.block_style, self.list_kind)))
+      self.tokens = []
+    self.block_style = {}
+
+  def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+    attributes = {key: value or '' for key, value in attrs}
+    if tag in {'p', 'div', 'li'}:
+      self._flush()
+      self.block_style = {'style': attributes.get('style', ''), 'dir': attributes.get('dir', '')}
+      if tag == 'li': self.list_kind = self.list_kind or 'ul'
+    elif tag in {'ul', 'ol'}:
+      self.list_kind = tag
+    elif tag == 'table':
+      self._flush(); self.table = []
+    elif tag == 'tr' and self.table is not None:
+      self.row = []
+    elif tag in {'td', 'th'} and self.row is not None:
+      self.cell = []
+    elif tag in {'strong', 'b', 'em', 'i', 'u'}:
+      self.stack.append(tag)
+    elif tag == 'br':
+      self.tokens.append(('text', '\n', {'bold': '1' if any(x in {'strong', 'b'} for x in self.stack) else '', 'italic': '1' if any(x in {'em', 'i'} for x in self.stack) else '', 'underline': '1' if 'u' in self.stack else ''}))
+    elif tag == 'img':
+      self.tokens.append(('image', attributes.get('src', ''), {}))
+
+  def handle_endtag(self, tag: str) -> None:
+    if tag in {'p', 'div', 'li'}: self._flush()
+    elif tag in {'ul', 'ol'}: self.list_kind = None
+    elif tag in {'strong', 'b', 'em', 'i', 'u'} and tag in self.stack: self.stack.remove(tag)
+    elif tag in {'td', 'th'} and self.row is not None and self.cell is not None:
+      self.row.append(''.join(self.cell).strip()); self.cell = None
+    elif tag == 'tr' and self.table is not None and self.row is not None:
+      self.table.append(self.row); self.row = None
+    elif tag == 'table' and self.table is not None:
+      self.blocks.append(('table', self.table)); self.table = None
+
+  def handle_data(self, data: str) -> None:
+    if self.cell is not None: self.cell.append(data)
+    elif self.table is None: self.tokens.append(('text', data, {'bold': '1' if any(x in {'strong', 'b'} for x in self.stack) else '', 'italic': '1' if any(x in {'em', 'i'} for x in self.stack) else '', 'underline': '1' if 'u' in self.stack else ''}))
+
+
+def add_rich_docx_content(document, html: str) -> None:
+  from docx.enum.text import WD_ALIGN_PARAGRAPH
+  from docx.shared import Inches
+  parser = _DocxRichParser(); parser.feed(html); parser.close(); parser._flush()
+  for kind, payload in parser.blocks:
+    if kind == 'table':
+      rows = payload
+      if not rows: continue
+      table = document.add_table(rows=len(rows), cols=max(len(row) for row in rows))
+      table.style = 'Table Grid'
+      for row_index, row in enumerate(rows):
+        for cell_index, text in enumerate(row): table.cell(row_index, cell_index).text = text
+      continue
+    tokens, block_style, list_kind = payload
+    style = 'List Bullet' if list_kind == 'ul' else 'List Number' if list_kind == 'ol' else None
+    paragraph = document.add_paragraph(style=style)
+    css = block_style.get('style', '')
+    if 'text-align:center' in css: paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    elif 'text-align:right' in css: paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    elif 'text-align:justify' in css: paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    for token_kind, value, flags in tokens:
+      if token_kind == 'image' and value.startswith('data:image/') and ',' in value:
+        try: paragraph.add_run().add_picture(BytesIO(b64decode(value.split(',', 1)[1])), width=Inches(5.8))
+        except Exception: pass
+      elif token_kind == 'text':
+        run = paragraph.add_run(value); run.bold = bool(flags.get('bold')); run.italic = bool(flags.get('italic')); run.underline = bool(flags.get('underline'))
 
 
 def build_docx(*, title: str, reference: str, counterparty: str, version: dict[str, Any], template_bytes: bytes | None = None) -> bytes:
@@ -91,10 +178,9 @@ def build_docx(*, title: str, reference: str, counterparty: str, version: dict[s
       p = document.add_paragraph(style=style)
       p.add_run(f"Article {node['number']} - {node['title']}" if depth == 0 else f"{node['number']} {node['title']}")
       if node.get('body'):
-        for paragraph in str(node['body']).split('\n'):
-          document.add_paragraph(paragraph)
+        add_rich_docx_content(document, str(node['body']))
       for note in node.get('notes', []):
-        document.add_paragraph(note, style='List Bullet')
+        add_rich_docx_content(document, f'<ul><li>{note}</li></ul>')
       visit(node.get('children', []), depth + 1)
   visit(numbered)
   out = BytesIO(); document.save(out); return out.getvalue()
@@ -147,7 +233,8 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
     for node in nodes:
       story.append(Paragraph(f"Article {node['number']} - {node['title']}" if depth == 0 else f"{node['number']} {node['title']}", article if depth == 0 else sub))
       for paragraph in str(node.get('body') or '').split('\n'):
-        if paragraph.strip(): story.append(Paragraph(paragraph.replace('&', '&amp;'), body))
-      for note_text in node.get('notes', []): story.append(Paragraph(note_text.replace('&', '&amp;'), note, bulletText='•'))
+        plain = rich_text_to_plain(paragraph)
+        if plain.strip(): story.append(Paragraph(plain.replace('&', '&amp;'), body))
+      for note_text in node.get('notes', []): story.append(Paragraph(rich_text_to_plain(note_text).replace('&', '&amp;'), note, bulletText='•'))
       visit(node.get('children', []), depth + 1)
   visit(numbered); doc.build(story); return out.getvalue()

@@ -1,4 +1,5 @@
 import React from 'react';
+import RichTextEditor from './RichTextEditor';
 
 export interface ContractNode {
   id: string;
@@ -47,7 +48,7 @@ export default function ContractStructureEditor({ value, onChange }: Props) {
         <strong style={{ color: '#6d28d9', minWidth: 42 }}>{node.number || (depth === 0 ? `${index + 1}` : '')}</strong>
         <input aria-label={`Article ${node.number || index + 1} title`} value={node.title} onChange={e => onChange(update(value, node.id, n => ({ ...n, title: e.target.value })))} style={{ ...input, fontWeight: 600 }} />
       </div>
-      <textarea aria-label={`Article ${node.number || index + 1} body`} value={node.body} onChange={e => onChange(update(value, node.id, n => ({ ...n, body: e.target.value })))} rows={3} placeholder="Write the article or sub-article text…" style={{ ...input, resize: 'vertical' }} />
+      <RichTextEditor value={node.body} onChange={next => onChange(update(value, node.id, n => ({ ...n, body: next })))} placeholder="Write the article or sub-article text…" />
       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginTop: 5 }}>
         <button type="button" onClick={() => onChange(insertSibling(value, node.id, true))} style={action}>+ Article before</button>
         <button type="button" onClick={() => onChange(insertSibling(value, node.id, false))} style={action}>+ Article after</button>
