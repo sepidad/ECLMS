@@ -5,7 +5,7 @@ so that Alembic autogenerate and create_all see the full schema.
 """
 
 from infrastructure.database.models.contract_reviews import ContractReviewFeedbackModel
-from infrastructure.database.models.contracts import ContractModel, ContractVersionModel
+from infrastructure.database.models.contracts import ContractModel, ContractTemplateModel, ContractVersionModel
 from infrastructure.database.models.documents_audit import (
   AuditEventModel,
   DocumentModel,
@@ -45,6 +45,7 @@ __all__ = [
   'ContractModel',
   'ContractReviewFeedbackModel',
   'ContractVersionModel',
+  'ContractTemplateModel',
   'DocumentModel',
   'DocumentVersionModel',
   'EmailDeliveryModel',

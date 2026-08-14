@@ -2,6 +2,7 @@
 
 from infrastructure.database.repositories.audit_repository import SqlAuditStore
 from infrastructure.database.repositories.contract_repository import SqlContractRepository
+from infrastructure.database.repositories.contract_template_repository import SqlContractTemplateRepository
 from infrastructure.database.repositories.document_repository import SqlDocumentRepository
 from infrastructure.database.repositories.finance_repository import SqlFinanceRepository
 from infrastructure.database.repositories.obligation_repository import SqlObligationRepository
@@ -12,6 +13,7 @@ from infrastructure.database.repositories.workflow_repository import SqlWorkflow
 __all__ = [
   'SqlAuditStore',
   'SqlContractRepository',
+  'SqlContractTemplateRepository',
   'SqlDocumentRepository',
   'SqlFinanceRepository',
   'SqlObligationRepository',

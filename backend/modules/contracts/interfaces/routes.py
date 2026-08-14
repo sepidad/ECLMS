@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from pydantic import BaseModel, Field
 
 from backend.api.middleware.context import get_trace_id
@@ -91,14 +91,41 @@ def _guarantee_service(request: Request):
   return request.app.state.container.get_service('contracts.guarantee.service')
 
 
+def _template_service(request: Request):
+  return request.app.state.container.get_service('contracts.template.service')
+
+
 @router.get('/templates')
 async def get_contract_templates(request: Request):
   """Return the approved Phase 6 template library for contract preparation."""
   try:
-    await require_permission(request, 'contract.read')
+    actor = await require_permission(request, 'contract.read')
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
-  return ok({'items': list_templates()}, get_trace_id())
+  custom = await _template_service(request).list(actor.organization_id)
+  return ok({'items': list_templates(), 'word_templates': custom}, get_trace_id())
+
+
+@router.post('/templates/upload')
+async def upload_contract_template(
+  request: Request,
+  file: UploadFile = File(...),
+  name: str = Form(...),
+  contract_type: str = Form('GENERAL'),
+  description: str = Form(''),
+):
+  try:
+    actor = await require_permission(request, 'user.manage')
+    file_name = file.filename or 'contract-template.docx'
+    if not file_name.lower().endswith('.docx'):
+      return err('INVALID_TEMPLATE', 'Only .docx Word templates are supported', get_trace_id())
+    content = await file.read()
+    if not content:
+      return err('INVALID_TEMPLATE', 'The template file is empty', get_trace_id())
+    item = await _template_service(request).upload(organization_id=actor.organization_id, name=name, contract_type=contract_type, description=description or None, file_name=file_name, content=content, created_by=actor.id)
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok(item, get_trace_id())
 
 
 @router.post('')
@@ -285,8 +312,13 @@ async def export_contract(contract_id: str, request: Request, format: str = 'doc
     version = next((item for item in versions if item.get('is_active')), versions[-1] if versions else {})
     if format not in {'docx', 'pdf'}:
       return err('INVALID_FORMAT', 'Export format must be docx or pdf', get_trace_id())
+    template_bytes = await _template_service(request).active_bytes(actor.organization_id)
+    if template_bytes is None:
+      from pathlib import Path
+      fallback = Path('templates/organization-default.docx')
+      template_bytes = fallback.read_bytes() if fallback.exists() else None
     if format == 'docx':
-      content = build_docx(title=contract.title, reference=contract.reference_number, counterparty=contract.counterparty, version=version)
+      content = build_docx(title=contract.title, reference=contract.reference_number, counterparty=contract.counterparty, version=version, template_bytes=template_bytes)
       media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       filename = f'{contract.reference_number}.docx'
     else:

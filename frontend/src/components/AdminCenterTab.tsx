@@ -19,10 +19,18 @@ export default function AdminCenterTab({ user, users, headers, onNavigate, onOpe
   const [saving, setSaving] = React.useState(false);
   const [selectedUser, setSelectedUser] = React.useState('');
   const [userPermissions, setUserPermissions] = React.useState<{ code: string; description: string; enabled: boolean }[]>([]);
+  const [wordTemplates, setWordTemplates] = React.useState<any[]>([]);
+  const [templateName, setTemplateName] = React.useState('');
+  const [templateType, setTemplateType] = React.useState('GENERAL');
+  const [templateDescription, setTemplateDescription] = React.useState('');
+  const [templateFile, setTemplateFile] = React.useState<File | null>(null);
+  const [templateSaving, setTemplateSaving] = React.useState(false);
   React.useEffect(() => { fetch(`/api/v1/identity/roles/${role}/permissions`, { headers }).then(r => r.json()).then(d => { if (d.success) { const enabled = new Set(d.data.permissions); setPermissions((d.data.all_permissions || []).map((p: any) => ({ ...p, enabled: enabled.has(p.code) }))); } }); }, [role]);
+  React.useEffect(() => { fetch('/api/v1/contracts/templates', { headers }).then(r => r.json()).then(d => { if (d.success) setWordTemplates(d.data.word_templates || []); }); }, []);
   const savePermissions = async () => { setSaving(true); await fetch(`/api/v1/identity/roles/${role}/permissions`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ permissions: permissions.filter(p => p.enabled).map(p => p.code) }) }); setSaving(false); };
   const loadUserPermissions = async (userId: string) => { setSelectedUser(userId); const response = await fetch(`/api/v1/identity/users/${userId}/permissions`, { headers }); const data = await response.json(); if (data.success) { const enabled = new Set(data.data.effective); setUserPermissions((data.data.all_permissions || []).map((p: any) => ({ ...p, enabled: enabled.has(p.code) }))); } };
   const saveUserPermissions = async () => { if (!selectedUser) return; setSaving(true); await fetch(`/api/v1/identity/users/${selectedUser}/permissions`, { method: 'PUT', headers: { ...headers, 'Content-Type': 'application/json' }, body: JSON.stringify({ permissions: Object.fromEntries(userPermissions.map(p => [p.code, p.enabled])) }) }); setSaving(false); };
+  const uploadWordTemplate = async (event: React.FormEvent) => { event.preventDefault(); if (!templateFile || !templateName) return; setTemplateSaving(true); const form = new FormData(); form.append('file', templateFile); form.append('name', templateName); form.append('contract_type', templateType); form.append('description', templateDescription); const response = await fetch('/api/v1/contracts/templates/upload', { method: 'POST', headers: { Authorization: headers.Authorization }, body: form }); const data = await response.json(); if (data.success) { setWordTemplates([data.data, ...wordTemplates]); setTemplateName(''); setTemplateDescription(''); setTemplateFile(null); } else { window.alert(data.error?.message || 'Template upload failed'); } setTemplateSaving(false); };
   return (
     <div>
       <section style={{ background: 'linear-gradient(135deg, #0f172a, #334155)', color: '#fff', borderRadius: '16px', padding: '26px 28px', marginBottom: '18px' }}>
@@ -46,6 +54,21 @@ export default function AdminCenterTab({ user, users, headers, onNavigate, onOpe
         <select value={role} onChange={e => setRole(e.target.value)} style={{ padding: '8px', borderRadius: '6px', border: '1px solid #cbd5e1', marginBottom: '12px' }}><option>CONTRACT_MANAGER</option><option>VIEWER</option></select>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '8px' }}>{permissions.map(permission => <label key={permission.code} style={{ display: 'flex', gap: '8px', alignItems: 'start', padding: '8px', background: '#f8fafc', borderRadius: '6px', fontSize: '12px' }}><input type="checkbox" checked={permission.enabled} onChange={e => setPermissions(permissions.map(p => p.code === permission.code ? { ...p, enabled: e.target.checked } : p))} /><span><strong>{permission.code}</strong><br /><span style={{ color: '#64748b' }}>{permission.description}</span></span></label>)}</div>
         <button onClick={savePermissions} disabled={saving} style={{ ...button, marginTop: '14px', background: '#4338ca', color: '#fff' }}>{saving ? 'Saving…' : 'Save permissions'}</button>
+      </section>
+      <section style={{ ...card, marginTop: '18px' }}>
+        <h3 style={{ margin: 0, fontSize: '15px' }}>Word document templates</h3>
+        <p style={{ color: '#64748b', fontSize: '12px' }}>Upload organization letterheads and contract-type templates. The active Word template is used during DOCX export; the built-in organization template is used when no custom template has been uploaded.</p>
+        <form onSubmit={uploadWordTemplate} style={{ display: 'grid', gridTemplateColumns: '1fr 160px', gap: '8px', alignItems: 'end' }}>
+          <label style={{ fontSize: '11px', color: '#475569' }}>Template name<input value={templateName} onChange={e => setTemplateName(e.target.value)} required placeholder="Organization letterhead" style={{ display: 'block', width: '100%', marginTop: 4, padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, boxSizing: 'border-box' }} /></label>
+          <label style={{ fontSize: '11px', color: '#475569' }}>Contract type<select value={templateType} onChange={e => setTemplateType(e.target.value)} style={{ display: 'block', width: '100%', marginTop: 4, padding: 8, border: '1px solid #cbd5e1', borderRadius: 6 }}><option>GENERAL</option><option>SERVICE</option><option>PURCHASE</option><option>CONSTRUCTION</option><option>CONSULTING</option><option>MAINTENANCE</option></select></label>
+          <label style={{ fontSize: '11px', color: '#475569' }}>Description<input value={templateDescription} onChange={e => setTemplateDescription(e.target.value)} placeholder="A4 letterhead and signature layout" style={{ display: 'block', width: '100%', marginTop: 4, padding: 8, border: '1px solid #cbd5e1', borderRadius: 6, boxSizing: 'border-box' }} /></label>
+          <label style={{ fontSize: '11px', color: '#475569' }}>DOCX file<input type="file" accept=".docx" onChange={e => setTemplateFile(e.target.files?.[0] || null)} required style={{ display: 'block', width: '100%', marginTop: 7, fontSize: 11 }} /></label>
+          <button type="submit" disabled={templateSaving} style={{ ...button, background: '#0f766e', color: '#fff', justifySelf: 'start' }}>{templateSaving ? 'Uploading…' : 'Upload Word template'}</button>
+        </form>
+        <div style={{ marginTop: 14, display: 'grid', gap: 7 }}>
+          <div style={{ padding: 9, background: '#f0fdf4', borderRadius: 6, fontSize: 12 }}><strong>Built-in organization template</strong><span style={{ color: '#166534', marginLeft: 8 }}>Available for DOCX export</span></div>
+          {wordTemplates.map(item => <div key={item.id} style={{ padding: 9, background: '#f8fafc', borderRadius: 6, fontSize: 12 }}><strong>{item.name}</strong><span style={{ color: '#64748b', marginLeft: 8 }}>{item.contract_type} · {item.file_name}</span><div style={{ color: '#64748b', marginTop: 3 }}>{item.description || 'No description'}</div></div>)}
+        </div>
       </section>
       <section style={{ ...card, marginTop: '18px' }}>
         <h3 style={{ margin: 0, fontSize: '15px' }}>Individual permission overrides</h3>

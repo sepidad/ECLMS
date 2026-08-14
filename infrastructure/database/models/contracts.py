@@ -51,3 +51,18 @@ class ContractVersionModel(Base):
   created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
   contract: Mapped[ContractModel] = relationship(back_populates='versions')
+
+
+class ContractTemplateModel(Base):
+  __tablename__ = 'contract_templates'
+
+  id: Mapped[str] = mapped_column(String(32), primary_key=True)
+  organization_id: Mapped[str] = mapped_column(String(32), ForeignKey('organizations.id'), index=True, nullable=False)
+  name: Mapped[str] = mapped_column(String(200), nullable=False)
+  contract_type: Mapped[str] = mapped_column(String(80), nullable=False, default='GENERAL')
+  description: Mapped[str | None] = mapped_column(Text, nullable=True)
+  storage_path: Mapped[str] = mapped_column(String(500), nullable=False)
+  file_name: Mapped[str] = mapped_column(String(300), nullable=False)
+  is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+  created_by: Mapped[str] = mapped_column(String(32), nullable=False)
+  created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

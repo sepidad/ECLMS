@@ -41,29 +41,43 @@ def _add_page_field(paragraph) -> None:
   run._r.extend([begin, instr, end])
 
 
-def build_docx(*, title: str, reference: str, counterparty: str, version: dict[str, Any]) -> bytes:
+def build_docx(*, title: str, reference: str, counterparty: str, version: dict[str, Any], template_bytes: bytes | None = None) -> bytes:
+  from io import BytesIO
   from docx import Document
   from docx.enum.section import WD_SECTION
   from docx.enum.text import WD_ALIGN_PARAGRAPH
+  from docx.enum.style import WD_STYLE_TYPE
   from docx.shared import Inches, Pt, RGBColor
 
-  document = Document()
+  document = Document(BytesIO(template_bytes)) if template_bytes else Document()
   section = document.sections[0]
-  section.top_margin = Inches(0.8); section.bottom_margin = Inches(0.75)
-  section.left_margin = Inches(0.9); section.right_margin = Inches(0.9)
+  if not template_bytes:
+    section.top_margin = Inches(0.8); section.bottom_margin = Inches(0.75)
+    section.left_margin = Inches(0.9); section.right_margin = Inches(0.9)
   styles = document.styles
-  normal = styles['Normal']; normal.font.name = STYLE_PROFILE['body_font']; normal.font.size = Pt(STYLE_PROFILE['body_size'])
+  def ensure_style(name: str, base: str | None = None):
+    try:
+      return styles[name]
+    except KeyError:
+      style = styles.add_style(name, WD_STYLE_TYPE.PARAGRAPH)
+      if base:
+        style.base_style = ensure_style(base)
+      return style
+
+  normal = ensure_style('Normal'); normal.font.name = STYLE_PROFILE['body_font']; normal.font.size = Pt(STYLE_PROFILE['body_size'])
   for style_name, size, color in [('Title', 20, STYLE_PROFILE['accent']), ('Heading 1', STYLE_PROFILE['article_size'], STYLE_PROFILE['accent']), ('Heading 2', STYLE_PROFILE['sub_article_size'], STYLE_PROFILE['accent'])]:
-    style = styles[style_name]; style.font.name = STYLE_PROFILE['title_font']; style.font.size = Pt(size); style.font.bold = True; style.font.color.rgb = RGBColor.from_string(color)
-  styles['List Bullet'].font.name = STYLE_PROFILE['body_font']; styles['List Bullet'].font.size = Pt(STYLE_PROFILE['body_size'])
+    style = ensure_style(style_name, 'Normal'); style.font.name = STYLE_PROFILE['title_font']; style.font.size = Pt(size); style.font.bold = True; style.font.color.rgb = RGBColor.from_string(color)
+  bullet_style = ensure_style('List Bullet', 'Normal'); bullet_style.font.name = STYLE_PROFILE['body_font']; bullet_style.font.size = Pt(STYLE_PROFILE['body_size'])
 
   header = section.header.paragraphs[0]
-  header.text = 'ECLMS | CONTRACT DOCUMENT'
-  header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-  header.runs[0].font.name = STYLE_PROFILE['body_font']; header.runs[0].font.size = Pt(8); header.runs[0].font.color.rgb = RGBColor(100, 116, 139)
+  if not template_bytes:
+    header.text = 'ECLMS | CONTRACT DOCUMENT'
+    header.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    header.runs[0].font.name = STYLE_PROFILE['body_font']; header.runs[0].font.size = Pt(8); header.runs[0].font.color.rgb = RGBColor(100, 116, 139)
   footer = section.footer.paragraphs[0]
-  footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
-  footer.add_run('Page '); _add_page_field(footer)
+  if not template_bytes or not footer.text.strip():
+    footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    footer.add_run('Page '); _add_page_field(footer)
 
   heading = document.add_paragraph(style='Title'); heading.alignment = WD_ALIGN_PARAGRAPH.CENTER; heading.add_run(title)
   meta = document.add_paragraph(); meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -120,4 +134,3 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
       for note_text in node.get('notes', []): story.append(Paragraph(note_text.replace('&', '&amp;'), note, bulletText='•'))
       visit(node.get('children', []), depth + 1)
   visit(numbered); doc.build(story); return out.getvalue()
-
