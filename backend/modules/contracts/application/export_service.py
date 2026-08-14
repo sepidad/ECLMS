@@ -280,18 +280,18 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   def furniture(canvas, doc):
     canvas.saveState(); canvas.setFillColor(colors.HexColor('#64748B'))
     if header_image:
-      header_width = A4[0] - 0.8 * inch
+      header_width = A4[0]
       image_width, image_height = header_image.getSize()
       header_height = header_width * image_height / image_width
-      canvas.drawImage(header_image, 0.4 * inch, A4[1] - 0.25 * inch - header_height, width=header_width, height=header_height, preserveAspectRatio=True, anchor='n', mask='auto')
+      canvas.drawImage(header_image, 0, A4[1] - 0.25 * inch - header_height, width=header_width, height=header_height, preserveAspectRatio=True, anchor='n', mask='auto')
     else:
       canvas.setFont('Helvetica', 8)
       canvas.drawRightString(A4[0] - 0.9 * inch, A4[1] - 0.48 * inch, 'ECLMS | CONTRACT DOCUMENT')
     if footer_image:
-      footer_width = A4[0] - 0.8 * inch
+      footer_width = A4[0]
       image_width, image_height = footer_image.getSize()
       footer_height = footer_width * image_height / image_width
-      canvas.drawImage(footer_image, 0.4 * inch, 0.55 * inch, width=footer_width, height=footer_height, preserveAspectRatio=True, anchor='n', mask='auto')
+      canvas.drawImage(footer_image, 0, 0.55 * inch, width=footer_width, height=footer_height, preserveAspectRatio=True, anchor='n', mask='auto')
     canvas.setFont('Helvetica', 8)
     canvas.drawCentredString(A4[0] / 2, 0.27 * inch, f'Page {doc.page}')
     canvas.restoreState()
@@ -299,11 +299,11 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   header_margin = 0.25 * inch
   if header_image:
     image_width, image_height = header_image.getSize()
-    header_margin += (A4[0] - 0.8 * inch) * image_height / image_width + 0.15 * inch
+    header_margin += A4[0] * image_height / image_width + 0.15 * inch
   footer_margin = 0.55 * inch
   if footer_image:
     image_width, image_height = footer_image.getSize()
-    footer_margin += (A4[0] - 0.8 * inch) * image_height / image_width + 0.1 * inch
+    footer_margin += A4[0] * image_height / image_width + 0.1 * inch
   doc = BaseDocTemplate(out, pagesize=A4, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=header_margin if header_image else 0.75 * inch, bottomMargin=footer_margin if footer_image else 0.65 * inch)
   doc.addPageTemplates([PageTemplate(id='contract', frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')], onPage=furniture)])
   story = [Paragraph(title, title_style), Paragraph(f'{reference} | {counterparty}', ParagraphStyle('Meta', parent=body, alignment=TA_CENTER, textColor=colors.HexColor('#64748B'))), Spacer(1, 14)]
