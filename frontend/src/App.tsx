@@ -98,6 +98,7 @@ export default function App() {
 
   // Data state
   const [contracts, setContracts] = useState<Contract[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
   const [workflows, setWorkflows] = useState<Record<string, Workflow>>({});
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -163,6 +164,7 @@ export default function App() {
     if (token) {
       fetchMe();
       fetchContracts();
+      fetchTemplates();
       fetchUsers();
       fetchNotifications();
       fetchWebhooks();
@@ -221,6 +223,10 @@ export default function App() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const fetchTemplates = async () => {
+    try { const res = await fetch('/api/v1/contracts/templates', { headers }); const data = await res.json(); if (data.success) setTemplates(data.data.items || []); } catch (e) { console.error(e); }
   };
 
   const fetchUsers = async () => {
@@ -753,6 +759,10 @@ export default function App() {
         {/* CONTRACTS TAB */}
         {activeTab === 'contracts' && (
           <>
+          <section style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '18px', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}><div><h2 style={{ margin: 0, fontSize: '18px' }}>Contract Template Library</h2><p style={{ margin: '4px 0 0', color: '#64748b', fontSize: '13px' }}>Reusable structures for fields, clauses, reviewers, SLAs, and required guarantees.</p></div><button onClick={fetchTemplates} style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '7px 11px', borderRadius: '6px', cursor: 'pointer' }}>Refresh templates</button></div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', marginTop: '14px' }}>{templates.map(template => <div key={template.key} style={{ border: '1px solid #ddd6fe', background: '#faf5ff', borderRadius: '8px', padding: '12px' }}><strong style={{ color: '#4c1d95' }}>{template.name}</strong><p style={{ fontSize: '12px', color: '#64748b', margin: '5px 0 9px' }}>{template.description}</p><div style={{ fontSize: '11px', color: '#475569' }}><strong>Fields:</strong> {(template.fields || []).map((f: any) => f.label).join(', ')}</div><div style={{ fontSize: '11px', color: '#475569', marginTop: '4px' }}><strong>Guarantees:</strong> {(template.required_guarantees || []).join(', ') || 'None'}</div></div>)}</div>
+          </section>
           {selectedContractId && (
             <ContractPanel
               contractId={selectedContractId}

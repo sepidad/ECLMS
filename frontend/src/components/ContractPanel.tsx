@@ -219,6 +219,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
 
   const lifecycleIndex = LIFECYCLE_STATES.indexOf(detail.state);
   const lifecycleProgress = lifecycleIndex >= 0 ? ((lifecycleIndex + 1) / LIFECYCLE_STATES.length) * 100 : 0;
+  const activeVersion = versions.find(v => v.is_active) || versions[versions.length - 1];
 
   return (
     <div className="contract-workspace" style={{ background: '#fff', borderRadius: '14px', border: '1px solid #e2e8f0', padding: '24px', marginBottom: '24px', boxShadow: '0 12px 30px rgba(15, 23, 42, .06)' }}>
@@ -240,6 +241,14 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
         <div className="contract-workspace__lifecycle-line"><span style={{ width: `${lifecycleProgress}%` }} /></div>
         {LIFECYCLE_STATES.map((state, index) => <div key={state} className={`contract-workspace__lifecycle-step ${index <= lifecycleIndex ? 'is-complete' : ''} ${state === detail.state ? 'is-current' : ''}`}><span>{index <= lifecycleIndex ? '✓' : index + 1}</span><small>{state.replace('_', ' ')}</small></div>)}
       </div>
+
+      <section style={{ marginBottom: '24px', border: '1px solid #c4b5fd', borderRadius: '10px', background: '#faf5ff', padding: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <div><h3 style={{ margin: 0, fontSize: '16px', color: '#4c1d95' }}>Official contract content</h3><span style={{ fontSize: '12px', color: '#6b21a8' }}>{activeVersion ? `Version ${activeVersion.version_number} · immutable official version` : 'No content yet'}</span></div>
+          <button onClick={startEdit} style={btn('primary')}><Save size={14} /> Edit / add content</button>
+        </div>
+        <pre style={{ margin: 0, maxHeight: '320px', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', lineHeight: 1.55, color: '#334155', background: '#fff', border: '1px solid #e9d5ff', borderRadius: '7px', padding: '14px' }}>{activeVersion?.content || 'This contract has no document content yet. Click “Edit / add content” to create the first official version.'}</pre>
+      </section>
 
       <div className="contract-workspace__overview" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
         {/* Edit / metadata */}
