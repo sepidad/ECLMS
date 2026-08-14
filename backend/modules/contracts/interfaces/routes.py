@@ -44,8 +44,24 @@ class TransitionRequest(BaseModel):
   new_state: str = Field(min_length=1)
 
 
+class FeedbackRequest(BaseModel):
+  version_id: str = Field(min_length=1)
+  reviewer_role: str = Field(pattern='^(LEGAL|FINANCE)$')
+  kind: str = Field(pattern='^(COMMENT|SUGGESTION|REJECTION)$')
+  body: str = Field(min_length=1, max_length=10000)
+  proposed_text: str | None = Field(default=None, max_length=200000)
+
+
+class FeedbackDecisionRequest(BaseModel):
+  status: str = Field(pattern='^(ACCEPTED|REJECTED)$')
+
+
 def _service(request: Request) -> ContractService:
   return request.app.state.container.get_service('contracts.service')
+
+
+def _review_service(request: Request):
+  return request.app.state.container.get_service('contracts.review.service')
 
 
 @router.get('/templates')
@@ -115,6 +131,39 @@ async def get_contract(contract_id: str, request: Request):
     },
     get_trace_id(),
   )
+
+
+@router.get('/{contract_id}/feedback')
+async def list_feedback(contract_id: str, request: Request):
+  try:
+    actor = await require_permission(request, 'contract.read')
+    items = await _review_service(request).list_feedback(contract_id, actor.organization_id)
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'items': items}, get_trace_id())
+
+
+@router.post('/{contract_id}/feedback')
+async def add_feedback(contract_id: str, payload: FeedbackRequest, request: Request):
+  try:
+    actor = await require_permission(request, 'contract.update')
+    item = await _review_service(request).add_feedback(
+      contract_id=contract_id, reviewer_id=actor.id, organization_id=actor.organization_id,
+      **payload.model_dump(),
+    )
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'id': item.id, 'status': item.status}, get_trace_id())
+
+
+@router.post('/feedback/{feedback_id}/decision')
+async def decide_feedback(feedback_id: str, payload: FeedbackDecisionRequest, request: Request):
+  try:
+    await require_permission(request, 'contract.update')
+    await _review_service(request).decide(feedback_id, payload.status)
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok({'id': feedback_id, 'status': payload.status}, get_trace_id())
 
 
 @router.patch('/{contract_id}')

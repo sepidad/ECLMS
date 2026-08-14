@@ -4,6 +4,7 @@ Importing this package registers every model with the declarative Base
 so that Alembic autogenerate and create_all see the full schema.
 """
 
+from infrastructure.database.models.contract_reviews import ContractReviewFeedbackModel
 from infrastructure.database.models.contracts import ContractModel, ContractVersionModel
 from infrastructure.database.models.documents_audit import (
   AuditEventModel,
@@ -40,6 +41,7 @@ __all__ = [
   'AuditEventModel',
   'ConnectorSyncModel',
   'ContractModel',
+  'ContractReviewFeedbackModel',
   'ContractVersionModel',
   'DocumentModel',
   'DocumentVersionModel',

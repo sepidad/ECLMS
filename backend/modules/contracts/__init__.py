@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 from backend.core.base.module import Module
 from backend.modules.contracts.application.contract_service import ContractService
+from backend.modules.contracts.application.review_service import ContractReviewService
 from backend.modules.contracts.interfaces import router
 
 if TYPE_CHECKING:
@@ -24,13 +25,14 @@ class ContractsModule(Module):
 
   def initialize(self, container: ModuleContainer) -> None:
     from infrastructure.database.repositories import SqlContractRepository
-
-    self._repositories = {'contracts': SqlContractRepository()}
+    from infrastructure.database.repositories.contract_review_repository import SqlContractReviewRepository
+    self._repositories = {'contracts': SqlContractRepository(), 'reviews': SqlContractReviewRepository()}
 
   def register_services(self, container: ModuleContainer) -> None:
     event_bus = container.get_service('event_bus')
     service = ContractService(self._repositories['contracts'], event_bus)
     container.register_service('contracts.service', service)
+    container.register_service('contracts.review.service', ContractReviewService(self._repositories['reviews'], service))
 
   def register_routes(self, gateway: APIGateway) -> None:
     gateway.mount('contracts', router)
