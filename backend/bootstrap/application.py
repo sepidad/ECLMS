@@ -21,7 +21,6 @@ from typing import Any
 
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 
 from backend.api.gateway import APIGateway
 from backend.api.middleware.errors import register_exception_handlers
@@ -220,12 +219,6 @@ def create_app() -> FastAPI:
     from fastapi.responses import PlainTextResponse
     return PlainTextResponse(render_metrics())
 
-  class LLMSettingsUpdate(BaseModel):
-    llm_api_url: str | None = None
-    llm_api_key: str | None = None
-    llm_model: str | None = None
-    llm_timeout_seconds: int | None = None
-
   @app.get('/api/v1/config/llm-settings')
   async def get_llm_settings(request: Request):
     from backend.api.middleware.context import get_trace_id
@@ -238,17 +231,17 @@ def create_app() -> FastAPI:
     }, get_trace_id())
 
   @app.patch('/api/v1/config/llm-settings')
-  async def update_llm_settings(request: Request, payload: LLMSettingsUpdate):
+  async def update_llm_settings(request: Request, payload: dict):
     from backend.api.middleware.context import get_trace_id
     from backend.api.responses import ok
-    if payload.llm_api_url is not None:
-      settings.llm_api_url = payload.llm_api_url
-    if payload.llm_api_key is not None:
-      settings.llm_api_key = payload.llm_api_key
-    if payload.llm_model is not None:
-      settings.llm_model = payload.llm_model
-    if payload.llm_timeout_seconds is not None:
-      settings.llm_timeout_seconds = payload.llm_timeout_seconds
+    if payload.get('llm_api_url') is not None:
+      settings.llm_api_url = payload['llm_api_url']
+    if payload.get('llm_api_key') is not None:
+      settings.llm_api_key = payload['llm_api_key']
+    if payload.get('llm_model') is not None:
+      settings.llm_model = payload['llm_model']
+    if payload.get('llm_timeout_seconds') is not None:
+      settings.llm_timeout_seconds = payload['llm_timeout_seconds']
     return ok({
       'llm_api_url': settings.llm_api_url,
       'llm_model': settings.llm_model,
