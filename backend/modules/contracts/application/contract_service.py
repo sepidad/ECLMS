@@ -43,6 +43,7 @@ class ContractService:
     counterparty: str,
     organization_id: str,
     owner_id: str,
+    tags: list[str] | None = None,
     content: str | None = None,
     structure: list[dict] | None = None,
   ) -> Contract:
@@ -53,6 +54,7 @@ class ContractService:
       organization_id=organization_id,
       owner_id=owner_id,
     )
+    contract.tags = self._normalize_tags(tags)
     await self._repository.save(contract)
     await self._repository.create_version(contract, content=content, structure=structure)
     await self._event_bus.publish(
@@ -79,6 +81,7 @@ class ContractService:
     counterparty: str | None = None,
     content: str | None = None,
     structure: list[dict] | None = None,
+    tags: list[str] | None = None,
   ) -> Contract:
     """Update mutable fields and snapshot a new immutable version."""
     contract = await self._require_scoped(contract_id, organization_id)
@@ -88,6 +91,8 @@ class ContractService:
       contract.reference_number = reference_number
     if counterparty is not None:
       contract.counterparty = counterparty
+    if tags is not None:
+      contract.tags = self._normalize_tags(tags)
     contract.updated_at = utc_now()
     await self._repository.save(contract)
     await self._repository.create_version(contract, content=content, structure=structure)
@@ -128,3 +133,12 @@ class ContractService:
   async def list_versions(self, contract_id: str, *, organization_id: str) -> list[dict]:
     await self._require_scoped(contract_id, organization_id)
     return await self._repository.list_versions(contract_id)
+
+  @staticmethod
+  def _normalize_tags(tags: list[str] | None) -> list[str]:
+    result: list[str] = []
+    for tag in tags or []:
+      value = ' '.join(str(tag).strip().split())
+      if value and value.lower() not in {item.lower() for item in result}:
+        result.append(value[:80])
+    return result[:30]

@@ -100,13 +100,25 @@ def build_docx(*, title: str, reference: str, counterparty: str, version: dict[s
   out = BytesIO(); document.save(out); return out.getvalue()
 
 
-def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[str, Any]) -> bytes:
+def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[str, Any], template_bytes: bytes | None = None) -> bytes:
   from reportlab.lib import colors
   from reportlab.lib.enums import TA_CENTER, TA_RIGHT
-  from reportlab.lib.pagesizes import LETTER
+  from reportlab.lib.pagesizes import A4
   from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
   from reportlab.lib.units import inch
   from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, PageBreak, Spacer
+
+  header_image = None
+  if template_bytes:
+    from zipfile import ZipFile
+    try:
+      with ZipFile(BytesIO(template_bytes)) as archive:
+        image_names = sorted(name for name in archive.namelist() if name.startswith('word/media/'))
+        if image_names:
+          from reportlab.lib.utils import ImageReader
+          header_image = ImageReader(BytesIO(archive.read(image_names[0])))
+    except Exception:  # noqa: BLE001 - a malformed optional header must not block PDF export
+      header_image = None
 
   out = BytesIO()
   styles = getSampleStyleSheet()
@@ -117,12 +129,17 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
   note = ParagraphStyle('Note', parent=body, leftIndent=18, bulletIndent=7, textColor=colors.HexColor('#666666'))
 
   def furniture(canvas, doc):
-    canvas.saveState(); canvas.setFont('Helvetica', 8); canvas.setFillColor(colors.HexColor('#64748B'))
-    canvas.drawRightString(LETTER[0] - 0.9 * inch, LETTER[1] - 0.48 * inch, 'ECLMS | CONTRACT DOCUMENT')
-    canvas.drawCentredString(LETTER[0] / 2, 0.42 * inch, f'Page {doc.page}')
+    canvas.saveState(); canvas.setFillColor(colors.HexColor('#64748B'))
+    if header_image:
+      canvas.drawImage(header_image, 0.65 * inch, A4[1] - 1.25 * inch, width=A4[0] - 1.3 * inch, height=1.0 * inch, preserveAspectRatio=True, anchor='n', mask='auto')
+    else:
+      canvas.setFont('Helvetica', 8)
+      canvas.drawRightString(A4[0] - 0.9 * inch, A4[1] - 0.48 * inch, 'ECLMS | CONTRACT DOCUMENT')
+    canvas.setFont('Helvetica', 8)
+    canvas.drawCentredString(A4[0] / 2, 0.42 * inch, f'Page {doc.page}')
     canvas.restoreState()
 
-  doc = BaseDocTemplate(out, pagesize=LETTER, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=0.75 * inch, bottomMargin=0.65 * inch)
+  doc = BaseDocTemplate(out, pagesize=A4, leftMargin=0.9 * inch, rightMargin=0.9 * inch, topMargin=1.45 * inch if header_image else 0.75 * inch, bottomMargin=0.65 * inch)
   doc.addPageTemplates([PageTemplate(id='contract', frames=[Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height, id='normal')], onPage=furniture)])
   story = [Paragraph(title, title_style), Paragraph(f'{reference} | {counterparty}', ParagraphStyle('Meta', parent=body, alignment=TA_CENTER, textColor=colors.HexColor('#64748B'))), Spacer(1, 14)]
   numbered, _, _ = numbered_structure(_structure(version))

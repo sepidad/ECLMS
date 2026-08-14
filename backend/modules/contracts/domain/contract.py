@@ -41,6 +41,7 @@ class Contract(Entity):
     self.counterparty = counterparty
     self.organization_id = organization_id
     self.owner_id = owner_id
+    self.tags: list[str] = []
     self.state = CONTRACT_STATE_DRAFT
     self.effective_date: datetime | None = None
     self.expiry_date: datetime | None = None

@@ -22,6 +22,7 @@ class ContractModel(Base):
   title: Mapped[str] = mapped_column(String(300), nullable=False)
   reference_number: Mapped[str] = mapped_column(String(64), nullable=False)
   counterparty: Mapped[str] = mapped_column(String(200), nullable=False)
+  tags_json: Mapped[str | None] = mapped_column(Text, nullable=True)
   state: Mapped[str] = mapped_column(String(30), nullable=False, default='DRAFT', index=True)
   organization_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
   owner_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)

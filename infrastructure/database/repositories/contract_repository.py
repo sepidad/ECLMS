@@ -30,6 +30,7 @@ def _to_domain(model: ContractModel) -> Contract:
     contract_id=model.id,
   )
   contract.state = model.state
+  contract.tags = json.loads(model.tags_json) if model.tags_json else []
   contract.effective_date = model.effective_date
   contract.expiry_date = model.expiry_date
   contract.created_at = model.created_at
@@ -60,6 +61,7 @@ class SqlContractRepository:
             title=contract.title,
             reference_number=contract.reference_number,
             counterparty=contract.counterparty,
+            tags_json=json.dumps(contract.tags, ensure_ascii=False),
             state=contract.state,
             organization_id=contract.organization_id,
             owner_id=contract.owner_id,
@@ -74,6 +76,7 @@ class SqlContractRepository:
         existing.title = contract.title
         existing.reference_number = contract.reference_number
         existing.counterparty = contract.counterparty
+        existing.tags_json = json.dumps(contract.tags, ensure_ascii=False)
         existing.state = contract.state
         existing.current_version_id = contract.current_version_id
         existing.effective_date = contract.effective_date

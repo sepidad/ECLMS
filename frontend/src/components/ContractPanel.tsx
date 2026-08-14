@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Save, History, Upload, FileText, AlertTriangle, FileSearch, CheckCircle2, AlertCircle, ShieldAlert, Download } from 'lucide-react';
+import { ArrowLeft, Save, History, Upload, FileText, AlertTriangle, FileSearch, CheckCircle2, AlertCircle, ShieldAlert, Download, Eye, X } from 'lucide-react';
 import { downloadAuthenticated } from '../download';
 import ContractStructureEditor from './ContractStructureEditor';
 import type { ContractNode } from './ContractStructureEditor';
@@ -19,6 +19,7 @@ interface ContractDetail {
   state: string;
   owner_id: string;
   organization_id: string;
+  tags?: string[];
 }
 
 interface Version { id: string; version_number: number; title: string; counterparty: string; content: string | null; structure?: ContractNode[] | null; is_active: boolean; created_at: string; }
@@ -59,6 +60,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
   const [title, setTitle] = useState('');
   const [ref, setRef] = useState('');
   const [counterparty, setCounterparty] = useState('');
+  const [tags, setTags] = useState('');
   const [content, setContent] = useState('');
   const [structure, setStructure] = useState<ContractNode[]>([]);
 
@@ -76,6 +78,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
   const [mergeContent, setMergeContent] = useState('');
   const [mergeTarget, setMergeTarget] = useState<Feedback | null>(null);
   const [exporting, setExporting] = useState('');
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState('');
 
   const api = async (path: string, opts: RequestInit = {}) => {
     const res = await fetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
@@ -140,6 +143,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
     setTitle(detail.title);
     setRef(detail.reference_number);
     setCounterparty(detail.counterparty);
+    setTags((detail.tags || []).join(', '));
     const active = versions.find(v => v.is_active);
     setContent(active?.content || '');
     setStructure(active?.structure || (active?.content ? [{ id: `legacy-${Date.now()}`, title: 'متن قرارداد', body: active.content, children: [], notes: [] }] : []));
@@ -150,7 +154,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
     e.preventDefault();
     setError(''); setMsg('');
     try {
-      const payload: any = { title, reference_number: ref, counterparty, structure };
+      const payload: any = { title, reference_number: ref, counterparty, tags: tags.split(',').map(tag => tag.trim()).filter(Boolean), structure };
       if (!structure.length && content) payload.content = content;
       await api(`/api/v1/contracts/${contractId}`, {
         method: 'PATCH',
@@ -186,6 +190,20 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
     } catch (e: any) { setError(e.message || 'Export failed'); }
     finally { setExporting(''); }
   };
+
+  const previewPdf = async () => {
+    setExporting('preview'); setError('');
+    try {
+      const response = await fetch(`/api/v1/contracts/${contractId}/export?format=pdf`, { headers });
+      if (!response.ok) throw new Error('PDF preview failed');
+      const nextUrl = URL.createObjectURL(await response.blob());
+      if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+      setPdfPreviewUrl(nextUrl);
+    } catch (e: any) { setError(e.message || 'PDF preview failed'); }
+    finally { setExporting(''); }
+  };
+
+  useEffect(() => () => { if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl); }, [pdfPreviewUrl]);
 
   const runReview = async () => {
     setReviewing(true); setError('');
@@ -262,10 +280,12 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
             <button onClick={startEdit} style={btn('primary')}><Save size={14} /> Edit / add content</button>
             <button onClick={() => exportContract('docx')} disabled={!!exporting} style={btn('outline')}>{exporting === 'docx' ? 'Exporting…' : 'Export Word'}</button>
+            <button onClick={previewPdf} disabled={!!exporting} style={btn('outline')}><Eye size={14} /> {exporting === 'preview' ? 'Preparing…' : 'Preview PDF'}</button>
             <button onClick={() => exportContract('pdf')} disabled={!!exporting} style={btn('outline')}>{exporting === 'pdf' ? 'Exporting…' : 'Export PDF'}</button>
           </div>
         </div>
         <pre style={{ margin: 0, maxHeight: '320px', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', lineHeight: 1.55, color: '#334155', background: '#fff', border: '1px solid #e9d5ff', borderRadius: '7px', padding: '14px' }}>{activeVersion?.content || 'This contract has no document content yet. Click “Edit / add content” to create the first official version.'}</pre>
+        {pdfPreviewUrl && <div style={{ marginTop: '14px', border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#f8fafc' }}><div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 10px', borderBottom: '1px solid #e2e8f0' }}><strong style={{ fontSize: '12px' }}>PDF preview</strong><button type="button" onClick={() => { URL.revokeObjectURL(pdfPreviewUrl); setPdfPreviewUrl(''); }} style={{ ...btn('ghost'), padding: '4px 7px' }}><X size={14} /> Close</button></div><iframe title="Contract PDF preview" src={pdfPreviewUrl} style={{ width: '100%', height: '620px', border: 0 }} /></div>}
       </section>
 
       <div className="contract-workspace__overview" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginBottom: '24px' }}>
@@ -279,6 +299,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
               <div style={kv()}><span>Title</span><strong>{detail.title}</strong></div>
               <div style={kv()}><span>Reference</span><strong>{detail.reference_number}</strong></div>
               <div style={kv()}><span>Counterparty</span><strong>{detail.counterparty}</strong></div>
+              <div style={kv()}><span>Tags</span><div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'flex-end' }}>{(detail.tags || []).length ? detail.tags!.map(tag => <span key={tag} style={{ background: '#ede9fe', color: '#5b21b6', borderRadius: '999px', padding: '3px 8px', fontSize: '11px' }}>{tag}</span>) : <strong>None</strong>}</div></div>
               <div style={kv()}><span>State</span><strong>{detail.state}</strong></div>
               <div style={{ marginTop: '12px', display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button onClick={startEdit} style={btn('primary')}>Edit Metadata / Content</button>
@@ -307,6 +328,11 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
               <div>
                 <label style={label()}>Counterparty</label>
                 <input value={counterparty} onChange={e => setCounterparty(e.target.value)} required style={input()} />
+              </div>
+              <div>
+                <label style={label()}>Tags</label>
+                <input value={tags} onChange={e => setTags(e.target.value)} placeholder="construction, priority, 2026" style={input()} />
+                <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '4px' }}>Separate tags with commas.</div>
               </div>
               <ContractStructureEditor value={structure} onChange={setStructure} />
               <div style={{ display: 'flex', gap: '8px' }}>

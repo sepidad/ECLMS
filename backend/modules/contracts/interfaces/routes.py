@@ -37,6 +37,7 @@ class CreateContractRequest(BaseModel):
   counterparty: str = Field(min_length=1, max_length=200)
   content: str | None = Field(default=None, max_length=200_000)
   structure: list[dict] | None = None
+  tags: list[str] | None = Field(default=None, max_length=30)
 
 
 class UpdateContractRequest(BaseModel):
@@ -45,6 +46,7 @@ class UpdateContractRequest(BaseModel):
   counterparty: str | None = Field(default=None, min_length=1, max_length=200)
   content: str | None = Field(default=None, max_length=200_000)
   structure: list[dict] | None = None
+  tags: list[str] | None = Field(default=None, max_length=30)
 
 
 class TransitionRequest(BaseModel):
@@ -161,7 +163,7 @@ async def list_contracts(request: Request, limit: int = 100, offset: int = 0):
     return err(exc.code, exc.message, get_trace_id(), exc.details)
   return ok(
     {
-      'items': [{'id': c.id, 'title': c.title, 'state': c.state, 'reference_number': c.reference_number} for c in items],
+      'items': [{'id': c.id, 'title': c.title, 'state': c.state, 'reference_number': c.reference_number, 'counterparty': c.counterparty, 'tags': c.tags} for c in items],
       'total': total,
       'limit': limit,
       'offset': offset,
@@ -187,6 +189,7 @@ async def get_contract(contract_id: str, request: Request):
       'state': contract.state,
       'organization_id': contract.organization_id,
       'owner_id': contract.owner_id,
+      'tags': contract.tags,
     },
     get_trace_id(),
   )
@@ -322,7 +325,7 @@ async def export_contract(contract_id: str, request: Request, format: str = 'doc
       media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
       filename = f'{contract.reference_number}.docx'
     else:
-      content = build_pdf(title=contract.title, reference=contract.reference_number, counterparty=contract.counterparty, version=version)
+      content = build_pdf(title=contract.title, reference=contract.reference_number, counterparty=contract.counterparty, version=version, template_bytes=template_bytes)
       media_type = 'application/pdf'; filename = f'{contract.reference_number}.pdf'
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
