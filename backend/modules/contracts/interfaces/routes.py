@@ -25,6 +25,8 @@ from backend.core.exceptions import ECLMSError
 from backend.modules.contracts.application.contract_service import ContractService
 from backend.modules.contracts.domain.template import list_templates
 from backend.modules.contracts.domain.structure import normalize_structure, numbered_structure, render_structure
+from backend.modules.contracts.application.export_service import build_docx, build_pdf
+from fastapi.responses import Response
 
 router = APIRouter(tags=['contracts'])
 
@@ -271,6 +273,28 @@ async def list_versions(contract_id: str, request: Request):
   except ECLMSError as exc:
     return err(exc.code, exc.message, get_trace_id(), exc.details)
   return ok({'items': versions}, get_trace_id())
+
+
+@router.get('/{contract_id}/export')
+async def export_contract(contract_id: str, request: Request, format: str = 'docx'):
+  try:
+    actor = await require_permission(request, 'contract.read')
+    service = _service(request)
+    contract = await service.get_contract(contract_id, organization_id=actor.organization_id)
+    versions = await service.list_versions(contract_id, organization_id=actor.organization_id)
+    version = next((item for item in versions if item.get('is_active')), versions[-1] if versions else {})
+    if format not in {'docx', 'pdf'}:
+      return err('INVALID_FORMAT', 'Export format must be docx or pdf', get_trace_id())
+    if format == 'docx':
+      content = build_docx(title=contract.title, reference=contract.reference_number, counterparty=contract.counterparty, version=version)
+      media_type = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      filename = f'{contract.reference_number}.docx'
+    else:
+      content = build_pdf(title=contract.title, reference=contract.reference_number, counterparty=contract.counterparty, version=version)
+      media_type = 'application/pdf'; filename = f'{contract.reference_number}.pdf'
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return Response(content=content, media_type=media_type, headers={'Content-Disposition': f'attachment; filename="{filename}"'})
 
 
 @router.post('/{contract_id}/transition')

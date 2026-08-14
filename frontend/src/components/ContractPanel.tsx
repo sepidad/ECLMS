@@ -75,6 +75,7 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
   const [feedback, setFeedback] = useState<Feedback[]>([]);
   const [mergeContent, setMergeContent] = useState('');
   const [mergeTarget, setMergeTarget] = useState<Feedback | null>(null);
+  const [exporting, setExporting] = useState('');
 
   const api = async (path: string, opts: RequestInit = {}) => {
     const res = await fetch(path, { ...opts, headers: { ...headers, ...(opts.headers || {}) } });
@@ -177,6 +178,15 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
     } catch (e: any) { setError(e.message); }
   };
 
+  const exportContract = async (format: 'docx' | 'pdf') => {
+    setExporting(format); setError('');
+    try {
+      await downloadAuthenticated(`/api/v1/contracts/${contractId}/export?format=${format}`, headers, `${detail?.reference_number || 'contract'}.${format}`);
+      setMsg(`${format.toUpperCase()} export downloaded`);
+    } catch (e: any) { setError(e.message || 'Export failed'); }
+    finally { setExporting(''); }
+  };
+
   const runReview = async () => {
     setReviewing(true); setError('');
     try {
@@ -249,7 +259,11 @@ export default function ContractPanel({ contractId, headers, onClose, onUpdated 
       <section style={{ marginBottom: '24px', border: '1px solid #c4b5fd', borderRadius: '10px', background: '#faf5ff', padding: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <div><h3 style={{ margin: 0, fontSize: '16px', color: '#4c1d95' }}>Official contract content</h3><span style={{ fontSize: '12px', color: '#6b21a8' }}>{activeVersion ? `Version ${activeVersion.version_number} · immutable official version` : 'No content yet'}</span></div>
-          <button onClick={startEdit} style={btn('primary')}><Save size={14} /> Edit / add content</button>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+            <button onClick={startEdit} style={btn('primary')}><Save size={14} /> Edit / add content</button>
+            <button onClick={() => exportContract('docx')} disabled={!!exporting} style={btn('outline')}>{exporting === 'docx' ? 'Exporting…' : 'Export Word'}</button>
+            <button onClick={() => exportContract('pdf')} disabled={!!exporting} style={btn('outline')}>{exporting === 'pdf' ? 'Exporting…' : 'Export PDF'}</button>
+          </div>
         </div>
         <pre style={{ margin: 0, maxHeight: '320px', overflow: 'auto', whiteSpace: 'pre-wrap', fontFamily: 'inherit', fontSize: '13px', lineHeight: 1.55, color: '#334155', background: '#fff', border: '1px solid #e9d5ff', borderRadius: '7px', padding: '14px' }}>{activeVersion?.content || 'This contract has no document content yet. Click “Edit / add content” to create the first official version.'}</pre>
       </section>
