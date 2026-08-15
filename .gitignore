@@ -47,6 +47,7 @@ var/storage/
 var/*.db
 var/*.sqlite
 var/*.sqlite3
+var/backups/
 
 # Local debug/QA artifacts (export tests, template distillation)
 tmp/

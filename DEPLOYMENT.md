@@ -268,6 +268,31 @@ PostgreSQL while content lives on disk.
 The conceptual `architecture/deployment/06_Backup_Strategy.md` defines the
 retention and verification policy targets.
 
+### Verified drill (2026-08-15)
+
+The recovery procedure was executed end to end against the Compose stack and
+passed:
+
+1. **Baseline** — row counts captured from the live database:
+   users 7, contracts 13, contract_versions 16, audit_events 11.
+2. **Backup** —
+   `docker exec eclms-compose-postgres pg_dump -U eclms -d eclms -Fc -f /tmp/eclms-backup.dump`
+   (custom format, 28 tables with data, ~1.9 MB), copied to the host as
+   `var/backups/eclms-backup-20260815.dump`.
+3. **Restore** — scratch database `eclms_restore_drill` created;
+   `pg_restore -U eclms -d eclms_restore_drill --no-owner` completed clean;
+   restored row counts matched the baseline exactly.
+4. **Application verification** — a one-off API container started with
+   `ECLMS_DATABASE_URL` pointing at the restored database: `/health` returned
+   `ok` with `database: ok` and all 13 modules ok (startup migrations applied),
+   and `POST /api/v1/identity/auth/login` with the seeded admin succeeded.
+5. **Cleanup** — drill container and scratch database removed; the backup
+   archive was retained as evidence.
+
+Operational note: on Windows hosts using Git Bash, prefix container-path
+commands with `MSYS_NO_PATHCONV=1` so `/tmp/...` is not rewritten to a host
+path.
+
 ---
 
 ## 11. Security Posture

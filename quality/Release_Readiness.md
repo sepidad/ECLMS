@@ -32,10 +32,10 @@ This gate operationalizes the Project Constitution principles of documentation b
 - [ ] Production/staging secrets fail fast when invalid.
 - [x] HTTPS through Caddy, proxy headers, security headers, body-size limits, and rate limits are configured/verified; local HTTPS uses the configured `localhost` hostname.
 - [ ] Redis durable events are verified across restart/retry scenarios.
-- [ ] Backup and restore are tested, not only documented.
+- [x] Backup and restore are tested, not only documented. (2026-08-15 drill: `pg_dump` custom-format backup of the live Compose database, restore into a scratch database, row counts matched baseline exactly, application booted against the restored database with `/health` ok and all 13 modules ok, admin login succeeded. Evidence retained at `var/backups/eclms-backup-20260815.dump`; see DEPLOYMENT.md §10.)
 - [ ] Health, metrics, logs, and alert thresholds are observable by operators.
 - [ ] At least one real ERP/accounting connector is integrated with authentication, idempotency, retry, and reconciliation behavior.
-- [ ] Digital-signature scope is either implemented or explicitly deferred by a recorded decision.
+- [x] Digital-signature scope is either implemented or explicitly deferred by a recorded decision. (ADR-006, accepted 2026-08-15: deferred for the initial release; future support as a provider-based integration in the Integration module.)
 
 ## Release decision
 
