@@ -2,15 +2,14 @@
 
 from __future__ import annotations
 
+import re
+from base64 import b64decode
+from html.parser import HTMLParser
 from io import BytesIO
 from typing import Any
-from html.parser import HTMLParser
-from base64 import b64decode
-import re
 
-from backend.modules.contracts.domain.structure import numbered_structure
 from backend.modules.contracts.domain.rich_text import rich_text_to_plain
-
+from backend.modules.contracts.domain.structure import numbered_structure
 
 STYLE_PROFILE = {
   'body_font': 'Aptos',
@@ -105,6 +104,8 @@ def add_rich_docx_content(document, html: str) -> None:
   from docx.enum.text import WD_ALIGN_PARAGRAPH
   from docx.shared import Inches
   parser = _DocxRichParser(); parser.feed(html); parser.close(); parser._flush()
+  list_counter = 0
+  previous_list_kind: str | None = None
   for kind, payload in parser.blocks:
     if kind == 'table':
       rows = payload
@@ -139,18 +140,19 @@ def add_rich_docx_content(document, html: str) -> None:
     elif 'text-align:justify' in css: paragraph.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     for token_kind, value, flags in tokens:
       if token_kind == 'image' and value.startswith('data:image/') and ',' in value:
-        try: paragraph.add_run().add_picture(BytesIO(b64decode(value.split(',', 1)[1])), width=Inches(5.8))
-        except Exception: pass
+        from contextlib import suppress
+        with suppress(Exception):
+          paragraph.add_run().add_picture(BytesIO(b64decode(value.split(',', 1)[1])), width=Inches(5.8))
       elif token_kind == 'text':
         run = paragraph.add_run(value); run.bold = bool(flags.get('bold')); run.italic = bool(flags.get('italic')); run.underline = bool(flags.get('underline'))
 
 
 def build_docx(*, title: str, reference: str, counterparty: str, version: dict[str, Any], template_bytes: bytes | None = None) -> bytes:
   from io import BytesIO
+
   from docx import Document
-  from docx.enum.section import WD_SECTION
-  from docx.enum.text import WD_ALIGN_PARAGRAPH
   from docx.enum.style import WD_STYLE_TYPE
+  from docx.enum.text import WD_ALIGN_PARAGRAPH
   from docx.shared import Inches, Pt, RGBColor
 
   document = Document(BytesIO(template_bytes)) if template_bytes else Document()
@@ -205,11 +207,11 @@ def build_docx(*, title: str, reference: str, counterparty: str, version: dict[s
 
 def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[str, Any], template_bytes: bytes | None = None) -> bytes:
   from reportlab.lib import colors
-  from reportlab.lib.enums import TA_CENTER, TA_RIGHT
+  from reportlab.lib.enums import TA_CENTER
   from reportlab.lib.pagesizes import A4
   from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
   from reportlab.lib.units import inch
-  from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, PageBreak, Spacer, Table, TableStyle
+  from reportlab.platypus import BaseDocTemplate, Frame, PageTemplate, Paragraph, Spacer, Table, TableStyle
 
   header_image = None
   footer_image = None
@@ -219,8 +221,8 @@ def build_pdf(*, title: str, reference: str, counterparty: str, version: dict[st
       with ZipFile(BytesIO(template_bytes)) as archive:
         image_names = sorted(name for name in archive.namelist() if name.startswith('word/media/'))
         if image_names:
-          from reportlab.lib.utils import ImageReader
           from PIL import Image
+          from reportlab.lib.utils import ImageReader
           source = Image.open(BytesIO(archive.read(image_names[0]))).convert('RGB')
           # The uploaded Word letterhead is a full-page image. Extract the
           # actual header and footer bands instead of scaling the entire page.

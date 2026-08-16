@@ -5,7 +5,6 @@ from __future__ import annotations
 from html import escape
 from html.parser import HTMLParser
 
-
 _ALLOWED = {'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'img', 'div', 'span'}
 _VOID = {'br', 'img'}
 

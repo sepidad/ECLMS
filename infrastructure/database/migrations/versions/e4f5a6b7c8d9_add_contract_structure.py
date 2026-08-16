@@ -1,7 +1,7 @@
 """add structured article tree to contract versions"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = 'e4f5a6b7c8d9'
 down_revision = 'c9d0e1f2a3b4'

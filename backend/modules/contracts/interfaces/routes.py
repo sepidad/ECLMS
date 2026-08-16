@@ -16,6 +16,7 @@ from __future__ import annotations
 from datetime import date
 
 from fastapi import APIRouter, File, Form, Request, UploadFile
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from backend.api.middleware.context import get_trace_id
@@ -23,10 +24,9 @@ from backend.api.responses import err, ok
 from backend.api.security import require_abac, require_permission
 from backend.core.exceptions import ECLMSError
 from backend.modules.contracts.application.contract_service import ContractService
-from backend.modules.contracts.domain.template import list_templates
-from backend.modules.contracts.domain.structure import normalize_structure, numbered_structure, render_structure
 from backend.modules.contracts.application.export_service import build_docx, build_pdf
-from fastapi.responses import Response
+from backend.modules.contracts.domain.structure import normalize_structure, numbered_structure, render_structure
+from backend.modules.contracts.domain.template import list_templates
 
 router = APIRouter(tags=['contracts'])
 
@@ -37,6 +37,15 @@ class CreateContractRequest(BaseModel):
   counterparty: str = Field(min_length=1, max_length=200)
   content: str | None = Field(default=None, max_length=200_000)
   structure: list[dict] | None = None
+  tags: list[str] | None = Field(default=None, max_length=30)
+
+
+class CreateFromTemplateRequest(BaseModel):
+  template_key: str = Field(min_length=1, max_length=64)
+  title: str = Field(min_length=1, max_length=300)
+  reference_number: str = Field(min_length=1, max_length=64)
+  counterparty: str = Field(min_length=1, max_length=200)
+  field_values: dict[str, str] = Field(default_factory=dict)
   tags: list[str] | None = Field(default=None, max_length=30)
 
 
@@ -150,6 +159,39 @@ async def create_contract(payload: CreateContractRequest, request: Request):
   return ok({'id': contract.id, 'state': contract.state}, get_trace_id())
 
 
+@router.post('/from-template')
+async def create_contract_from_template(payload: CreateFromTemplateRequest, request: Request):
+  """Prepare a contract from an approved template (Phase 6 slice 1).
+
+  The template's structured fields are validated, stored as data, and
+  rendered into the initial contract version.
+  """
+  try:
+    actor = await require_permission(request, 'contract.create')
+    service = _service(request)
+    contract = await service.create_from_template(
+      template_key=payload.template_key,
+      title=payload.title,
+      reference_number=payload.reference_number,
+      counterparty=payload.counterparty,
+      field_values=payload.field_values,
+      tags=payload.tags,
+      organization_id=actor.organization_id,
+      owner_id=actor.id,
+    )
+  except ECLMSError as exc:
+    return err(exc.code, exc.message, get_trace_id(), exc.details)
+  return ok(
+    {
+      'id': contract.id,
+      'state': contract.state,
+      'template_key': contract.template_key,
+      'template_fields': contract.template_fields,
+    },
+    get_trace_id(),
+  )
+
+
 @router.get('')
 async def list_contracts(request: Request, limit: int = 100, offset: int = 0):
   try:
@@ -190,6 +232,8 @@ async def get_contract(contract_id: str, request: Request):
       'organization_id': contract.organization_id,
       'owner_id': contract.owner_id,
       'tags': contract.tags,
+      'template_key': contract.template_key,
+      'template_fields': contract.template_fields,
     },
     get_trace_id(),
   )

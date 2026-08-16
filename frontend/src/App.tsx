@@ -89,16 +89,6 @@ interface Workflow {
   steps: WorkflowStep[];
 }
 
-const templateStructure = (key: string): ContractNode[] => {
-  const make = (title: string, body = ''): ContractNode => ({ id: `${key}-${title}`, title, body, children: [], notes: [] });
-  const common = [make('Parties'), make('Contract subject'), make('Term and key dates'), make('Price and payment'), make('Parties obligations'), make('Guarantees, insurance, and deductions'), make('Changes, delay, and damages'), make('Termination, disputes, and general provisions')];
-  if (key === 'procurement') { common[1] = make('Goods, technical specifications, and quantity'); common.splice(3, 0, make('Delivery, inspection, and acceptance')); }
-  if (key === 'construction') { common[1] = make('Work scope and project boundaries'); common.splice(2, 0, make('Schedule, BOQ, and site')); common.push(make('Testing, provisional acceptance, and final acceptance')); }
-  if (key === 'consulting') { common[1] = make('Services and deliverables'); common.splice(4, 0, make('Key personnel and level of effort')); common.push(make('Confidentiality and intellectual property')); }
-  if (key === 'maintenance-sla') { common[1] = make('Services and covered assets'); common.splice(2, 0, make('Service levels, KPIs, and measurement')); common.push(make('Reporting, incidents, and service credits')); }
-  return common;
-};
-
 export default function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('eclms_token'));
   const [user, setUser] = useState<User | null>(null);
@@ -112,6 +102,12 @@ export default function App() {
   // Data state
   const [contracts, setContracts] = useState<Contract[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
+  const [prepTemplate, setPrepTemplate] = useState<any | null>(null);
+  const [prepFields, setPrepFields] = useState<Record<string, string>>({});
+  const [prepTitle, setPrepTitle] = useState('');
+  const [prepRef, setPrepRef] = useState('');
+  const [prepCounterparty, setPrepCounterparty] = useState('');
+  const [prepTags, setPrepTags] = useState('');
   const [workflows, setWorkflows] = useState<Record<string, Workflow>>({});
   const [users, setUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -476,13 +472,42 @@ export default function App() {
   };
 
   const applyContractTemplate = (template: any) => {
-    setNewTitle(template.name || 'New contract');
-    setNewRef(`${String(template.contract_type || 'CONTRACT').slice(0, 8)}-2026-001`);
-    setNewCounterparty('');
-    setNewContent(template.content_template || '');
-    setNewStructure(templateStructure(template.key));
+    setPrepTemplate(template);
+    setPrepFields(Object.fromEntries((template.fields || []).map((f: any) => [f.key, ''])));
+    setPrepTitle(template.name || 'New contract');
+    setPrepRef(`${String(template.contract_type || 'CONTRACT').slice(0, 8)}-2026-001`);
+    setPrepCounterparty('');
+    setPrepTags('');
     setSelectedContractId(null);
     setActiveTab('contracts');
+  };
+
+  const handleCreateFromTemplate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prepTemplate) return;
+    try {
+      const res = await fetch('/api/v1/contracts/from-template', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          template_key: prepTemplate.key,
+          title: prepTitle,
+          reference_number: prepRef,
+          counterparty: prepCounterparty,
+          field_values: prepFields,
+          tags: prepTags.split(',').map(tag => tag.trim()).filter(Boolean),
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setPrepTemplate(null);
+        fetchContracts();
+      } else {
+        alert(data.error?.message || 'Failed to prepare contract from template');
+      }
+    } catch (e: any) {
+      alert(e.message);
+    }
   };
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -883,6 +908,64 @@ export default function App() {
                 </table>
               </div>
             </div>
+
+            {/* Prepare From Template (Phase 6) */}
+            {prepTemplate && (
+              <div>
+                <div style={{ background: '#faf5ff', padding: '24px', borderRadius: '10px', border: '1px solid #ddd6fe', boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h3 style={{ fontSize: '16px', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <FileText size={18} color="#7c3aed" /> Prepare from Template: {prepTemplate.name}
+                    </h3>
+                    <button type="button" onClick={() => setPrepTemplate(null)} style={{ background: '#fff', border: '1px solid #cbd5e1', padding: '6px 12px', borderRadius: '6px', fontSize: '13px', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                  <form onSubmit={handleCreateFromTemplate} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Title</label>
+                        <input type="text" value={prepTitle} onChange={e => setPrepTitle(e.target.value)} required style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Reference Number</label>
+                        <input type="text" value={prepRef} onChange={e => setPrepRef(e.target.value)} required style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Counterparty</label>
+                        <input type="text" value={prepCounterparty} onChange={e => setPrepCounterparty(e.target.value)} required placeholder="e.g. Acme Corp" style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }} />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>Tags</label>
+                        <input type="text" value={prepTags} onChange={e => setPrepTags(e.target.value)} placeholder="e.g. procurement, 2026" style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }} />
+                      </div>
+                    </div>
+                    <div style={{ borderTop: '1px solid #e9d5ff', paddingTop: '14px' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#4c1d95', marginBottom: '10px' }}>Commercial fields (required fields are validated by the template)</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                        {(prepTemplate.fields || []).map((field: any) => (
+                          <div key={field.key}>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
+                              {field.label}{field.required !== false && <span style={{ color: '#dc2626' }}> *</span>}
+                            </label>
+                            <input
+                              type="text"
+                              value={prepFields[field.key] ?? ''}
+                              onChange={e => setPrepFields({ ...prepFields, [field.key]: e.target.value })}
+                              style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '13px', boxSizing: 'border-box' }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    {(prepTemplate.required_guarantees || []).length > 0 && (
+                      <div style={{ fontSize: '12px', color: '#6d28d9', background: '#f5f3ff', border: '1px dashed #ddd6fe', borderRadius: '6px', padding: '8px 10px' }}>
+                        After creation, register the required guarantees: <strong>{(prepTemplate.required_guarantees || []).join(', ')}</strong>
+                      </div>
+                    )}
+                    <button type="submit" style={{ background: '#7c3aed', color: '#fff', border: 'none', padding: '9px 16px', borderRadius: '6px', fontSize: '13px', fontWeight: 600, cursor: 'pointer', alignSelf: 'flex-start' }}>Create contract from template</button>
+                  </form>
+                </div>
+              </div>
+            )}
 
             {/* Create Contract Form */}
             <div>

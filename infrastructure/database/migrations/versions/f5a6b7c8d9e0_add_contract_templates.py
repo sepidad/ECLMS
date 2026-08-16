@@ -1,7 +1,7 @@
 """add organization Word contract templates"""
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 revision = 'f5a6b7c8d9e0'
 down_revision = 'e4f5a6b7c8d9'

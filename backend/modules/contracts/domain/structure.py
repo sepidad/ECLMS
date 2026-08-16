@@ -8,6 +8,7 @@ following siblings when the version is rendered.
 from __future__ import annotations
 
 from typing import Any
+
 from backend.modules.contracts.domain.rich_text import sanitize_rich_text
 
 

@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from backend.core.events import Event
-from backend.core.exceptions import NotFoundError
+from backend.core.exceptions import NotFoundError, ValidationError
 from backend.core.utils import utc_now
 from backend.modules.contracts.domain.contract import Contract
+from backend.modules.contracts.domain.template import get_template, prepare_from_template
 
 if TYPE_CHECKING:
   from backend.core.events import EventBus
@@ -69,6 +70,44 @@ class ContractService:
         metadata={'entity_type': 'contract', 'entity_id': contract.id, 'actor_id': owner_id, 'organization_id': organization_id},
       )
     )
+    return contract
+
+  async def create_from_template(
+    self,
+    *,
+    template_key: str,
+    title: str,
+    reference_number: str,
+    counterparty: str,
+    field_values: dict[str, str],
+    organization_id: str,
+    owner_id: str,
+    tags: list[str] | None = None,
+  ) -> Contract:
+    """Prepare a contract from an approved template (Phase 6 slice 1).
+
+    Field values are validated against the template, stored as structured
+    data on the contract, and rendered into the initial content version.
+    """
+    template = get_template(template_key)
+    if template is None:
+      raise ValidationError(f'Unknown contract template: {template_key}', details={'template_key': template_key})
+    try:
+      content, normalized_fields = prepare_from_template(template, field_values)
+    except ValueError as exc:
+      raise ValidationError(str(exc)) from exc
+    contract = await self.create_contract(
+      title=title,
+      reference_number=reference_number,
+      counterparty=counterparty,
+      organization_id=organization_id,
+      owner_id=owner_id,
+      tags=tags,
+      content=content,
+    )
+    contract.template_key = template.key
+    contract.template_fields = normalized_fields
+    await self._repository.save(contract)
     return contract
 
   async def update_contract(

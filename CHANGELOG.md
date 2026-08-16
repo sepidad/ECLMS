@@ -2,6 +2,26 @@
 
 All notable changes to ECLMS are documented here. Dates are YYYY-MM-DD.
 
+## 2026-08-16 — Phase 6 slice 1: template-backed preparation
+
+- New `POST /api/v1/contracts/from-template`: validates the chosen template,
+  rejects unknown fields, enforces required commercial fields, and renders the
+  values into the initial contract version with a schedule of commercial data.
+- Contracts now record template provenance: `template_key` and structured
+  field values (new columns + Alembic migration `b7c8d9e0f1a2`), returned by
+  `GET /contracts/{id}` so commercial facts stay searchable and reportable.
+- Frontend: "Use this template" opens a guided preparation form with dynamic
+  fields, tags, and a required-guarantees reminder.
+- Template library expanded to five approved templates (general service,
+  procurement, construction/works, consulting, maintenance/SLA).
+- Fixed a latent DOCX export crash: rich content containing a list hit
+  undefined list-state variables in `add_rich_docx_content`.
+- Ruff fully clean again (import sorting, stale noqa, image-error suppression);
+  B008 ignored globally as a known FastAPI idiom.
+- Release hardening (2026-08-15): backup/restore drill executed and recorded
+  (Gate D closed), ADR-006 defers digital signatures, README/CHANGELOG/LICENSE
+  added; suite grew to **209 passing tests**.
+
 ## 2026-08-14 — Release hardening & document exports
 
 - Started Phase 5 (Release Hardening): release gate checklist

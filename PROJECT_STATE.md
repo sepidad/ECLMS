@@ -481,19 +481,31 @@ Completed in the second hardening slice:
 - Verified direct API `/health` and `/metrics` plus Caddy `https://localhost/health` (HTTP 200 with HSTS).
 - Hardened `.dockerignore` and `.gitignore` so nested test caches and temporary validation clones cannot contaminate build/repository contexts; pushed as `eb79ea8`.
 
+Completed in the third hardening slice (2026-08-15):
+
+- Consolidated the working tree into a clean commit series and pushed to origin (main in sync).
+- Added the project README, CHANGELOG, and a proprietary LICENSE notice.
+- Recorded the digital-signature scope decision as ADR-006 (explicit deferral; future provider-based integration) — Gate D item closed.
+- Executed the backup/restore drill end to end against the live Compose database: `pg_dump` backup, restore into a scratch database with identical row counts, application boot against the restored database (`/health` ok, all 13 modules ok), and admin login verified. Evidence recorded in `quality/Release_Readiness.md` and `DEPLOYMENT.md` §10 — Gate D item closed.
+- Fixed a latent DOCX export crash (`add_rich_docx_content` used list-state variables before assignment) and restored a fully clean Ruff run.
+
 Current blockers for release readiness:
 
-- ERP/accounting connectors remain scaffolded/dry-run integrations; digital-signature integration is not implemented.
-- Backup/restore and real external-provider acceptance tests remain to be demonstrated.
+- ERP/accounting connectors remain scaffolded/dry-run integrations.
+- Real external-provider acceptance tests remain to be demonstrated.
 
 Next focus:
 
-- Review and consolidate the working tree into a release branch/commit sequence.
+- Complete external-provider acceptance checks and the production-grade connector.
 
-### Phase 6 — Contract Manager Workflow (specified)
+### 🔄 Phase 6 — Contract Manager Workflow (in progress)
 
 - Added `docs/28_Contract_Manager_Workflow.md` as the implementation specification derived from the contract workflow design document.
 - The first user journey is now explicitly manager-led: template → structured draft → parallel legal/finance review → manager merge → value/risk approval → execution → guarantee monitoring.
-- Implementation has not yet been declared complete; the next coding slice is template-backed contract preparation.
-- Complete clean-checkout and deployment acceptance tests.
-- Select one real enterprise connector and define the digital-signature scope through a recorded decision.
+- Template library expanded to five approved templates (general service, procurement, construction/works, consulting, maintenance/SLA) with structured fields, locked/optional clauses, required guarantees, and per-role review SLAs.
+- **Slice 1 complete (2026-08-15): template-backed contract preparation.**
+  - `POST /api/v1/contracts/from-template` validates the template and its required commercial fields (unknown keys rejected), stores `template_key` + structured field values on the contract (Alembic migration `b7c8d9e0f1a2`), and renders the values into the initial contract version alongside a commercial-data schedule.
+  - `GET /api/v1/contracts/{id}` now returns template provenance and field data.
+  - Frontend "Use this template" opens a guided preparation form with dynamic fields and a required-guarantees reminder.
+  - Seven new tests (validation, API lifecycle, RBAC denial); suite at **209 passing**; Ruff clean; frontend lint + build pass.
+- Remaining Phase 6 slices: configurable review assignments with SLA tracking, value/risk approval routing, guarantee register states and alerts (partially present), Persian localization after workflow acceptance.

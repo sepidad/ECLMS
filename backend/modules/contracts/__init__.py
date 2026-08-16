@@ -28,8 +28,8 @@ class ContractsModule(Module):
   def initialize(self, container: ModuleContainer) -> None:
     from infrastructure.database.repositories import SqlContractRepository
     from infrastructure.database.repositories.contract_review_repository import SqlContractReviewRepository
-    from infrastructure.database.repositories.guarantee_repository import SqlGuaranteeRepository
     from infrastructure.database.repositories.contract_template_repository import SqlContractTemplateRepository
+    from infrastructure.database.repositories.guarantee_repository import SqlGuaranteeRepository
     from infrastructure.storage import get_storage_provider
     self._repositories = {'contracts': SqlContractRepository(), 'reviews': SqlContractReviewRepository(), 'guarantees': SqlGuaranteeRepository(), 'templates': SqlContractTemplateRepository()}
     self._storage = get_storage_provider()

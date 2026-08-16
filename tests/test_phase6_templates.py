@@ -4,7 +4,13 @@ from backend.modules.contracts.domain.template import get_template, list_templat
 def test_phase6_template_library_exposes_structured_workflow_rules():
   templates = list_templates()
 
-  assert {item['key'] for item in templates} == {'general-service', 'procurement'}
+  assert {item['key'] for item in templates} == {
+    'general-service',
+    'procurement',
+    'construction',
+    'consulting',
+    'maintenance-sla',
+  }
   procurement = get_template('procurement')
   assert procurement is not None
   assert 'insurance_percentage' in {field.key for field in procurement.fields}

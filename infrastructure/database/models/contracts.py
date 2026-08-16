@@ -27,6 +27,8 @@ class ContractModel(Base):
   organization_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
   owner_id: Mapped[str] = mapped_column(String(32), index=True, nullable=False)
   current_version_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+  template_key: Mapped[str | None] = mapped_column(String(64), nullable=True)
+  template_fields_json: Mapped[str | None] = mapped_column(Text, nullable=True)
   effective_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
   expiry_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
   created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

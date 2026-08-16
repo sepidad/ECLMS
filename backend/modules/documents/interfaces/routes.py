@@ -31,7 +31,7 @@ def _service(request: Request) -> DocumentService:
 async def upload_document(
   request: Request,
   contract_id: str = Form(...),
-  file: UploadFile = File(...),  # noqa: B008 - FastAPI dependency injection
+  file: UploadFile = File(...),
   doc_type: str = Form('attachment'),
 ):
   try:

@@ -46,6 +46,8 @@ class Contract(Entity):
     self.effective_date: datetime | None = None
     self.expiry_date: datetime | None = None
     self.current_version_id: str | None = None
+    self.template_key: str | None = None
+    self.template_fields: dict[str, str] = {}
 
   def transition_to(self, new_state: str) -> None:
     """Validate and apply a lifecycle transition."""

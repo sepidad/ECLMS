@@ -108,3 +108,33 @@ def list_templates() -> list[dict]:
 
 def get_template(key: str) -> ContractTemplate | None:
   return next((item for item in TEMPLATES if item.key == key), None)
+
+
+def prepare_from_template(template: ContractTemplate, field_values: dict[str, str]) -> tuple[str, dict[str, str]]:
+  """Validate manager-supplied field values and render the contract content.
+
+  Values are stored as data and rendered into the document so commercial
+  facts remain searchable and reportable (Phase 6 spec, Template
+  requirements). Unknown keys are rejected so callers cannot smuggle
+  unreviewed data past the template contract.
+  """
+  declared = {field.key: field for field in template.fields}
+  unknown = sorted(set(field_values) - set(declared))
+  if unknown:
+    raise ValueError(f'Unknown template fields: {", ".join(unknown)}')
+  normalized: dict[str, str] = {}
+  missing: list[str] = []
+  for key, field in declared.items():
+    value = str(field_values.get(key, '')).strip()
+    if not value:
+      if field.required:
+        missing.append(field.label)
+      continue
+    normalized[key] = value
+  if missing:
+    raise ValueError(f'Missing required fields: {", ".join(missing)}')
+
+  lines = [template.content_template, '', 'SCHEDULE OF COMMERCIAL DATA']
+  lines.extend(f'{declared[key].label}: {normalized[key]}' for key in normalized)
+  content = '\n'.join(lines)
+  return content, normalized
